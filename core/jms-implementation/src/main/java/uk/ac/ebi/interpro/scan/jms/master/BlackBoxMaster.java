@@ -38,7 +38,7 @@ public interface BlackBoxMaster extends SimpleBlackBoxMaster {
      *
      * @param sequenceType the kind of input sequence
      */
-    void setSequenceType(String sequenceType);
+    void setSeqTypeString(String sequenceType);
 
     /**
      * Parameter passed in on command line to set minimum nucleotide size of ORF to report (EMBOSS getorf parameter).

@@ -25,7 +25,7 @@ public class TestAmqInterProScanMaster {
     public void processOutputFormatsForProteinsTest() {
         //Set up the master
         master = new StandaloneBlackBoxMaster();
-        master.setSequenceType("p");
+        master.setSeqTypeString("p");
         //Run the test
         Map<String, String> params = new HashMap<String, String>();
         String[] outputFormats = new String[]{"tsv", "html", "gff3"};
@@ -56,7 +56,7 @@ public class TestAmqInterProScanMaster {
     public void processOutputFormatsForNucleicAcidsTest() {
         //Set up the master
         master = new StandaloneBlackBoxMaster();
-        master.setSequenceType("n");
+        master.setSeqTypeString("n");
         //Run the test
         Map<String, String> params = new HashMap<String, String>();
         String[] outputFormats = new String[]{"gff3"};

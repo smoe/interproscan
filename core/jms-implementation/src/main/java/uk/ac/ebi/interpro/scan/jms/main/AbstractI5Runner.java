@@ -30,8 +30,6 @@ public class AbstractI5Runner {
             "Third party components (e.g. member database binaries and models) are subject to separate licensing - " +
             "please see the individual member database websites for details.\n\n";
 
-    protected static final Mode DEFAULT_MODE = Mode.STANDALONE;
-
     protected static void printHelp(final Options commandLineOptionsForHelp) {
         HELP_FORMATTER.printHelp(HELP_MESSAGE_TITLE, HEADER, commandLineOptionsForHelp, FOOTER);
     }

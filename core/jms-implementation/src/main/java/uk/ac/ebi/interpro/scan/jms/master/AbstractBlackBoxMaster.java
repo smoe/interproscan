@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Required;
 import org.springframework.util.StringUtils;
 import uk.ac.ebi.interpro.scan.io.FileOutputFormat;
 import uk.ac.ebi.interpro.scan.jms.activemq.CleanRunDatabase;
+import uk.ac.ebi.interpro.scan.jms.main.SequenceType;
 import uk.ac.ebi.interpro.scan.management.model.implementations.WriteOutputStep;
 import uk.ac.ebi.interpro.scan.management.model.implementations.stepInstanceCreation.StepInstanceCreatingStep;
 import uk.ac.ebi.interpro.scan.management.model.implementations.stepInstanceCreation.nucleotide.RunGetOrfStep;
@@ -32,7 +33,7 @@ public abstract class AbstractBlackBoxMaster extends AbstractMaster implements B
      * p: Protein (DEFAULT)
      * n: nucleic acid (DNA or RNA)
      */
-    protected String sequenceType = "p";
+    protected String seqTypeString = SequenceType.P.getCode();
     /**
      * Minimum nucleotide size of ORF to report (Any integer value). Default value is 50.
      */
@@ -107,7 +108,7 @@ public abstract class AbstractBlackBoxMaster extends AbstractMaster implements B
     }
 
     protected int createStepInstances() {
-        return ("n".equalsIgnoreCase(this.sequenceType))
+        return (SequenceType.N.getCode().equals(this.seqTypeString))
                 ? createNucleicAcidLoadStepInstance()
                 : createFastaFileLoadStepInstance();
     }
@@ -159,7 +160,7 @@ public abstract class AbstractBlackBoxMaster extends AbstractMaster implements B
         params.put(WriteOutputStep.MAP_TO_GO, Boolean.toString(mapToGO));
         params.put(StepInstanceCreatingStep.USE_MATCH_LOOKUP_SERVICE, Boolean.toString(useMatchLookupService));
         params.put(WriteOutputStep.MAP_TO_PATHWAY, Boolean.toString(mapToPathway));
-        params.put(WriteOutputStep.SEQUENCE_TYPE, this.sequenceType);
+        params.put(WriteOutputStep.SEQUENCE_TYPE, this.seqTypeString);
         params.put(RunGetOrfStep.MIN_NUCLEOTIDE_SIZE, this.minSize);
     }
 
@@ -176,7 +177,7 @@ public abstract class AbstractBlackBoxMaster extends AbstractMaster implements B
         // It seems that no valid output formats were specified, so just default to all
         else {
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("No valid output formats specified, therefore use the default (all for sequence type " + this.sequenceType + ")");
+                LOGGER.info("No valid output formats specified, therefore use the default (all for sequence type " + this.seqTypeString + ")");
             }
             for (FileOutputFormat outputFormat : FileOutputFormat.values()) {
                 String extension = outputFormat.getFileExtension();
@@ -217,11 +218,11 @@ public abstract class AbstractBlackBoxMaster extends AbstractMaster implements B
      * p: Protein
      * n: nucleic acid (DNA or RNA)
      *
-     * @param sequenceType the kind of input sequence
+     * @param seqTypeString the kind of input sequence
      */
     @Override
-    public void setSequenceType(String sequenceType) {
-        this.sequenceType = sequenceType;
+    public void setSeqTypeString(String seqTypeString) {
+        this.seqTypeString = seqTypeString;
     }
 
     /**

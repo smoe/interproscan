@@ -8,7 +8,6 @@ import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.util.StringUtils;
 import uk.ac.ebi.interpro.scan.io.ExternallySetLocationTemporaryDirectoryManager;
-import uk.ac.ebi.interpro.scan.io.FileOutputFormat;
 import uk.ac.ebi.interpro.scan.io.TemporaryDirectoryManager;
 import uk.ac.ebi.interpro.scan.jms.converter.Converter;
 import uk.ac.ebi.interpro.scan.jms.master.*;
@@ -99,17 +98,9 @@ public class Run extends AbstractI5Runner {
             // parse the command line arguments
             CommandLine parsedCommandLine = parser.parse(COMMAND_LINE_OPTIONS, args);
 
-            modeArgument = parsedCommandLine.getOptionValue(I5Option.MODE.getLongOpt());
+            mode = RunUtils.getMode(parsedCommandLine);
 
-            try {
-                mode = (modeArgument != null)
-                        ? Mode.valueOf(modeArgument.toUpperCase())
-                        : DEFAULT_MODE;
-            } catch (IllegalArgumentException iae) {
-                LOGGER.fatal("The mode '" + modeArgument + "' is not handled.  Should be one of: " + Mode.getCommaSepModeList());
-                System.exit(1);
-            }
-
+            // Tailor the InterProScan help message to the mode the user is using
             for (Option option : (Collection<Option>) COMMAND_LINE_OPTIONS.getOptions()) {
                 final String shortOpt = option.getOpt();
                 if (I5Option.showOptInHelpMessage(shortOpt, mode)) {
@@ -117,7 +108,7 @@ public class Run extends AbstractI5Runner {
                 }
             }
 
-            //can we get this from the properties file
+            // TODO can we get this from the properties file?
             System.out.println(Utilities.getTimeNow() + " Welcome to InterProScan-5.10-50.0");
             //String config = System.getProperty("config");
             if (LOGGER.isInfoEnabled()) {
@@ -136,7 +127,7 @@ public class Run extends AbstractI5Runner {
             String[] analysesToRun = null;
             if (parsedCommandLine.hasOption(I5Option.ANALYSES.getLongOpt())) {
                 parsedAnalyses = parsedCommandLine.getOptionValues(I5Option.ANALYSES.getLongOpt());
-                parsedAnalyses = tidyOptionsArray(parsedAnalyses);
+                parsedAnalyses = RunUtils.tidyOptionsArray(parsedAnalyses);
             }
 
 
@@ -222,33 +213,9 @@ public class Run extends AbstractI5Runner {
             }
 
             // Validate the output formats supplied
-            String[] parsedOutputFormats = null;
-            if (parsedCommandLine.hasOption(I5Option.OUTPUT_FORMATS.getLongOpt())) {
-                parsedOutputFormats = parsedCommandLine.getOptionValues(I5Option.OUTPUT_FORMATS.getLongOpt());
-                parsedOutputFormats = tidyOptionsArray(parsedOutputFormats);
-                validateOutputFormatList(parsedOutputFormats, mode);
-            }
+            final String[] parsedOutputFormats = RunUtils.getOutputFormats(parsedCommandLine, mode);
 
-            // Validate the sequence type
-            String sequenceType = "p";
-            if (parsedCommandLine.hasOption(I5Option.SEQUENCE_TYPE.getLongOpt())) {
-                sequenceType = parsedCommandLine.getOptionValue(I5Option.SEQUENCE_TYPE.getLongOpt());
-
-                // Check the sequence type is "n" or "p"
-                Set<String> sequenceTypes = (HashSet<String>) ctx.getBean("sequenceTypes");
-                if (sequenceTypes != null && !sequenceTypes.contains(sequenceType)) {
-                    System.out.print("\n\nThe specified sequence type " + sequenceType + " was not recognised, expected: ");
-                    StringBuilder expectedSeqTypes = new StringBuilder();
-                    for (String seqType : sequenceTypes) {
-                        if (expectedSeqTypes.length() > 0) {
-                            expectedSeqTypes.append(",");
-                        }
-                        expectedSeqTypes.append(seqType);
-                    }
-                    System.out.println(expectedSeqTypes + "\n\n");
-                    System.exit(1);
-                }
-            }
+            final String sequenceType = RunUtils.getSequenceType(parsedCommandLine);
 
             if (mode.getRunnableBean() != null) {
                 final Runnable runnable = (Runnable) ctx.getBean(mode.getRunnableBean());
@@ -295,7 +262,6 @@ public class Run extends AbstractI5Runner {
      */
     private static void exitI5(final Mode mode, final int status) {
         if (mode.equals(Mode.CONVERT)) {
-//            buildConvertModeOptions();
             printHelp(COMMAND_LINE_OPTIONS_FOR_HELP);
             System.exit(status);
         }
@@ -391,7 +357,7 @@ public class Run extends AbstractI5Runner {
                     ((ClusterUser) bbMaster).setProjectId(projectId);
                     ((DistributedBlackBoxMaster) bbMaster).setSubmissionWorkerRunnerProjectId(projectId);
                     final String userDir = parsedCommandLine.getOptionValue(I5Option.USER_DIR.getLongOpt());
-                    ((DistributedBlackBoxMaster) bbMaster).setUserDir(userDir);
+                    bbMaster.setUserDir(userDir);
                     ((DistributedBlackBoxMaster) bbMaster).setSubmissionWorkerRunnerUserDir(userDir);
                     //setup the logdir
                     final File dir = new File(((DistributedBlackBoxMaster) bbMaster).getLogDir(), projectId.replaceAll("\\s+", ""));
@@ -422,7 +388,7 @@ public class Run extends AbstractI5Runner {
             }
 
             if (parsedCommandLine.hasOption(I5Option.SEQUENCE_TYPE.getLongOpt())) {
-                bbMaster.setSequenceType(sequenceType);
+                bbMaster.setSeqTypeString(sequenceType);
             }
 
             if (parsedCommandLine.hasOption(I5Option.MIN_SIZE.getLongOpt())) {
@@ -469,7 +435,7 @@ public class Run extends AbstractI5Runner {
 
         // Check the (-u) default output directory exists for now, but we are not necessarily going to write to this location
         if (haveSetUserDirName) {
-            String outputBaseFileName = getAbsoluteFilePath(defaultOutputFileName, parsedCommandLine);
+            final String outputBaseFileName = getAbsoluteFilePath(defaultOutputFileName, parsedCommandLine);
             checkDirectoryExistence(outputBaseFileName, I5Option.USER_DIR.getShortOpt());
         }
 
@@ -705,60 +671,6 @@ public class Run extends AbstractI5Runner {
         }
     }
 
-    /**
-     * Tidy an array of options for a command line option that takes multiple values.
-     * For example { "Pfam,", "Gene3d,SMART", ",", ",test" } becomes { "Pfam", "Gene3d", "SMART", "test" }.
-     * The validity of the options are not checked here.
-     *
-     * @param options Un-tidy array of options
-     * @return Array of options after tidying.
-     */
-    private static String[] tidyOptionsArray(String[] options) {
-        if (options == null || options.length < 1) {
-            return options;
-        }
-
-        Set<String> parsedOptions = new HashSet<String>();
-
-        // Examples of un-tidy options arrays:
-        // 1. Commons.cli stores "-appl Pfam -appl Gene3d" as an array with 2 items { "Pfam", "Gene3d" }
-        // 2. Commons.cli stores "-appl Pfam,Gene3d" as array with 1 item { "Pfam,Gene3d" }
-        // 3. The I5 code below also allows something like "-appl Pfam, Gene3d,SMART, , ,test" which comes through as an
-        //    array with 4 items { "Pfam,", "Gene3d,SMART", ",", ",test" } and needs to be tidied.
-        for (String optionsArrayItem : options) {
-            String[] optionsArrayItems = optionsArrayItem.split("[,\\s+]+");
-            for (String option : optionsArrayItems) {
-                if (option != null && !option.equals("")) {
-                    parsedOptions.add(option);
-                }
-            }
-        }
-
-        return parsedOptions.toArray(new String[parsedOptions.size()]);
-    }
-
-    /**
-     * Validate and tidy up the comma separated list of output formats specified by the user:
-     * - Do the formats exist?
-     *
-     * @return The tidied list of file extensions
-     */
-    private static void validateOutputFormatList(String[] outputFormats, Mode mode) {
-        // TODO With org.apache.commons.cli v2 could use EnumValidator instead, but currently we use cli v1.2
-        if (outputFormats != null && outputFormats.length > 0) {
-            // The user manually specified at least one output format, now check it's OK
-            for (String outputFormat : outputFormats) {
-                if (!FileOutputFormat.isExtensionValid(outputFormat)) {
-                    System.out.println("\n\n" + "The specified output file format " + outputFormat + " was not recognised." + "\n\n");
-                    System.exit(1);
-                } else if (!mode.equals(Mode.CONVERT) && outputFormat.equalsIgnoreCase("raw")) {
-                    // RAW output (InterProScan 4 TSV output) is only allowed in CONVERT mode
-                    System.out.println("\n\n" + "The specified output file format " + outputFormat + " is only supported in " + Mode.CONVERT.name() + " mode." + "\n\n");
-                    System.exit(1);
-                }
-            }
-        }
-    }
 
     /**
      * Checks if different versions of the same analyses occur.
