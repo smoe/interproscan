@@ -198,8 +198,8 @@ public class Run extends AbstractI5Runner {
             if (parsedCommandLine.hasOption(I5Option.OUTPUT_FORMATS.getLongOpt())) {
                 parsedOutputFormats = parsedCommandLine.getOptionValues(I5Option.OUTPUT_FORMATS.getLongOpt());
                 parsedOutputFormats = tidyOptionsArray(parsedOutputFormats);
-                //until we change the analysis  manager
-                parsedOutputFormats = xmlToXmlSlimOutputChange(parsedOutputFormats);
+//                until we change the analysis  manager
+//                parsedOutputFormats = xmlToXmlSlimOutputChange(parsedOutputFormats);
                 validateOutputFormatList(parsedOutputFormats, mode);
             }
 
