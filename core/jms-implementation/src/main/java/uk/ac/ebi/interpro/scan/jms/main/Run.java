@@ -240,7 +240,8 @@ public class Run extends AbstractI5Runner {
                 //checkIfDistributedWorkerAndConfigure(runnable, parsedCommandLine, ctx, mode);
 
                 //get temp directory for cleanup
-                if (!mode.equals(Mode.INSTALLER)) {
+                if (! (mode.equals(Mode.INSTALLER) || mode.equals(Mode.WORKER) || mode.equals(Mode.DISTRIBUTED_WORKER)
+                        || mode.equals(Mode.CONVERT) || mode.equals(Mode.HIGHMEM_WORKER)) ) {
                     final AbstractMaster master = (AbstractMaster) runnable;
                     temporaryDirectory = master.getWorkingTemporaryDirectoryPath();
                     deleteWorkingDirectoryOnCompletion = master.isDeleteWorkingDirectoryOnCompletion();
@@ -986,6 +987,7 @@ public class Run extends AbstractI5Runner {
             // Get hostname
             //get canonical hostname as otherwise hostname may not be exactly how other machines see this host
             final String hostname = InetAddress.getLocalHost().getCanonicalHostName();
+
 
             // Select a random port above 1024, excluding LSF ports and check availability.
             boolean portAssigned = false;
