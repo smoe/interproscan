@@ -158,6 +158,9 @@ def run_pfsearch_binary(arg_list, profiles, seqs_dict, stats_filename, command_i
 
 if __name__ == "__main__":
 
+    if sys.version_info<(2,7,0):
+        sys.exit("Error: You need python 2.7 or later to run this script")
+
     #deal with arguments that are required
     if len(sys.argv) < 6:
         sys.exit("Error: expected more than 6 arguments, check your command again")
@@ -208,6 +211,6 @@ if __name__ == "__main__":
         #     stats_file.write("pfsearch time avg = " + str(avg_per_cmd) + " ms \n")
 
 
-
+    print (sys.version)
 
 
