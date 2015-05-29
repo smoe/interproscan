@@ -134,7 +134,7 @@ public class Run extends AbstractI5Runner {
             }
 
 
-            System.out.println(Utilities.getTimeNow() + " Welcome to InterProScan-5.12-52.0");
+            System.out.println(Utilities.getTimeNow() + " Welcome to InterProScan-5.13-52.0");
 
 
             //String config = System.getProperty("config");
