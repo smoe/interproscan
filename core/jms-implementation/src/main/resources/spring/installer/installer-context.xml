@@ -131,6 +131,14 @@
                     <property name="analysisJobId" value="jobProDom-2006.1"/>
                 </bean>
 
+                <bean class="uk.ac.ebi.interpro.scan.io.panther.PantherModelDirectoryParser">
+                    <property name="signatureLibrary" value="PANTHER"/>
+                    <property name="analysisJobId" value="jobPanther"/>
+                    <property name="releaseVersionNumber" value="${panther.signature.library.release}"/>
+                    <property name="modelFiles" value="file:${panther.models.dir}"/>
+                    <property name="storeAbstract" value="${signature.store.abstracts}"/>
+                    <property name="namesTabFile" value="names.tab"/>
+                </bean>
 
                 <bean class="uk.ac.ebi.interpro.scan.io.panther.PantherModelDirectoryParser">
                     <property name="signatureLibrary" value="PANTHER"/>

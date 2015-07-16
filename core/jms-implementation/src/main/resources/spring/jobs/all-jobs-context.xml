@@ -10,10 +10,11 @@
     <import resource="jobPhobius-1.01-context.xml"/>
     <import resource="jobGene3d-3.5.0-context.xml"/>
     <import resource="jobGene3d-4.0.0-context.xml"/>
-    <import resource="jobPanther-9.0-context.xml"/>
     <import resource="jobPrints-42.0-context.xml"/>
     <import resource="jobCoils-2.2-context.xml"/>
     <import resource="jobHAMAP-context.xml"/>
+    <import resource="jobPanther-context.xml"/>
+    <import resource="jobPanther-9.0-context.xml"/>
     <import resource="jobPfam-context.xml"/>
     <import resource="jobPfamA-27.0-context.xml"/>
     <import resource="jobPrositeProfiles-20.105-context.xml"/>
@@ -48,15 +49,16 @@
 
                 <!-- Analyses -->
                 <!--Old versions are not present because they aren't in the H2 database anymore-->
+                <ref bean="jobCoils-2.2"/>
+                <ref bean="jobGene3d-3.5.0"/>
+                <ref bean="jobGene3d-4.0.0"/>
+                <ref bean="jobHAMAP"/>
                 <ref bean="jobPfam"/>
                 <ref bean="jobPfamA-27.0"/>
                 <ref bean="jobPhobius-1.01"/>
-                <ref bean="jobGene3d-3.5.0"/>
-                <ref bean="jobGene3d-4.0.0"/>
+                <ref bean="jobPanther"/>
                 <ref bean="jobPanther-9.0"/>
                 <ref bean="jobPRINTS-42.0"/>
-                <ref bean="jobCoils-2.2"/>
-                <ref bean="jobHAMAP"/>
                 <ref bean="jobProDom-2006.1"/>
                 <ref bean="jobPrositeProfiles-20.105"/>
                 <ref bean="jobPrositePatterns-20.105"/>
