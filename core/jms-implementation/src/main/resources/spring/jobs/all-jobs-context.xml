@@ -9,7 +9,7 @@
     <!--Old versions are switched off because they aren't in the database anymore-->
 
 
-    <import resource="jobCoils-2.2-context.xml"/>
+    <import resource="jobCoils-context.xml"/>
     <import resource="jobGene3d-context.xml"/>
     <import resource="jobHAMAP-context.xml"/>
     <import resource="jobPanther-context.xml"/>
@@ -56,7 +56,7 @@
 
                 <!-- Analyses -->
                 <!--Old versions are not present because they aren't in the H2 database anymore-->
-                <ref bean="jobCoils-2.2"/>
+                <ref bean="jobCoils"/>
                 <ref bean="jobGene3d"/>
                 <ref bean="jobHAMAP"/>
                 <ref bean="jobPanther"/>
