@@ -9,11 +9,11 @@
     <!-- ##### JOB: TMHMM - Prediction of transmembrane helices in proteins ############################  -->
     <!-- Used by the UniProt team in their "Annabel" automatic annotation pipeline. -->
 
-    <bean id="pathToBinaryFileId" class="java.lang.String">
+    <bean id="pathToBinaryFileId-2.0c" class="java.lang.String">
         <constructor-arg value="${binary.tmhmm.path}"/>
     </bean>
 
-    <bean id="pathToModelFileId" class="java.lang.String">
+    <bean id="pathToModelFileId-2.0c" class="java.lang.String">
         <constructor-arg value="${tmhmm.model.path}"/>
     </bean>
 
