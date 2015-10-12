@@ -36,7 +36,6 @@
 
     <import resource="jobSuperFamily-1.75-context.xml"/>
     <import resource="jobTMHMM-context.xml"/>
-    <import resource="jobTMHMM-2.0c-context.xml"/>
 
     <import resource="classpath:/spring/persistence/persistence-config-context.xml"/>
 
@@ -81,7 +80,6 @@
                 <ref bean="jobPIRSF-3.01" />
                 <ref bean="jobSuperFamily-1.75"/>
                 <ref bean="jobTMHMM"/>
-                <ref bean="jobTMHMM-2.0c"/>
             </list>
         </property>
         <property name="baseDirectoryTemporaryFiles" value="${temporary.file.directory}"/>
