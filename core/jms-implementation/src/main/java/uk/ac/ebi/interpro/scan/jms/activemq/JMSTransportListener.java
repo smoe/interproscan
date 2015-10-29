@@ -86,8 +86,8 @@ public class JMSTransportListener implements TransportListener {
             LOGGER.debug("Transport interrupted: ");
         }else{
             timePassed = now - previousIOExceptionTime;
-            if (timePassed > 600000){
-                LOGGER.warn("Transport interrupted  for > 10 min");
+            if (timePassed > 3600000){
+                LOGGER.warn("Transport interrupted  for > 20 min");
             }
         }
         lastInterrupt = System.currentTimeMillis();
