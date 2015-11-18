@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <import resource="classpath:/spring/persistence/persistence-config-context.xml"/>
+
+    <!-- ##### JOB: CDD -  ############################  -->
+
+    <bean id="pathToCDDBinaryFileId" class="java.lang.String">
+        <constructor-arg value="${binary.cdd.path}"/>
+    </bean>
+
+    <bean id="pathToCDDModelFileId" class="java.lang.String">
+        <constructor-arg value="${cdd.model.path}"/>
+    </bean>
+
+    <bean id="jobCDD" class="uk.ac.ebi.interpro.scan.management.model.Job">
+        <property name="description"
+                  value="Prediction of transmembrane helices in proteins"/>
+        <property name="analysis" value="true"/>
+        <property name="active" value="true" />
+        <property name="libraryRelease" ref="signatureLibraryReleaseCDD"/>
+        <!--Check mechanism for licensed binaries-->
+        <property name="nonEmptyPaths">
+            <list value-type="java.lang.String">
+                <ref bean="pathToCDDBinaryFileId"/>
+                <ref bean="pathToCDDModelFileId" />
+            </list>
+        </property>
+        <property name="mandatoryParameters">
+            <map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="binary.CDD.path" value-ref="pathToCDDBinaryFileId"/>
+                <entry key="CDD.model.path" value-ref="pathToCDDModelFileId"/>
+            </map>
+        </property>
+        <property name="doRunLocally" value="true"/>
+    </bean>
+
+    <bean id="abstractCDDStep" abstract="true" class="uk.ac.ebi.interpro.scan.management.model.Step">
+        <property name="job" ref="jobCDD"/>
+        <property name="maxProteins" value="${analysis.max.sequence.count.CDD}"/>
+        <property name="createStepInstancesForNewProteins" value="true"/>
+        <property name="retries" value="0"/>
+        <property name="nfsDelayMilliseconds" value="${nfs.delay.milliseconds}"/>
+    </bean>
+
+    <!-- STEP 1: Write FASTA file -->
+    <bean id="stepCDDWriteFastaFile"
+          class="uk.ac.ebi.interpro.scan.management.model.implementations.WriteFastaFileStep"
+          parent="abstractCDDStep">
+        <!-- This step has no dependencies, so will be scheduled first for its associated job. -->
+        <property name="stepDescription" value="Create FASTA file."/>
+        <property name="fastaFileNameTemplate" ref="fastaFileNameTemplate"/>
+        <!--<property name="serialGroup" value="WRITE_FASTA_FILE_CDD"/>-->
+        <property name="proteinDAO" ref="proteinDAO"/>
+    </bean>
+
+    <!-- STEP 2: Run binary -->
+    <bean id="stepCDDRunBinary"
+          class="uk.ac.ebi.interpro.scan.management.model.implementations.cdd.CDDBinaryStep"
+          parent="abstractCDDStep">
+        <!--
+        support-mini-x86-32/bin/CDD/2.0c/decodeanhmm
+        -N 1
+        -PostLabProb
+        -PrintNumbers
+        -background '0.081 0.015 0.054 0.061 0.040 0.068 0.022 0.057 0.056 0.093 0.025 0.045 0.049 0.039 0.057 0.068 0.058 0.067 0.013 0.032'
+        support-mini-x86-32/data/CDD/model/2.5.1/CDD2.5.1.model
+        support-mini-x86-32/data/CDD/test_proteins.fasta
+        -->
+        <property name="dependsUpon" ref="stepCDDWriteFastaFile"/>
+        <property name="stepDescription" value="Run CDD binary for selected protein sequences"/>
+        <!--Add path to binary-->
+        <property name="pathToCDDBinary" ref="pathToCDDBinaryFileId"/>
+        <!--Add different parameters-->
+        <property name="binarySwitches" value="${CDD.binary.switches}"/>
+        <!--Add background parameter-->
+        <property name="binaryBackgroundSwitch"
+                  value="0.081 0.015 0.054 0.061 0.040 0.068 0.022 0.057 0.056 0.093 0.025 0.045 0.049 0.039 0.057 0.068 0.058 0.067 0.013 0.032"/>
+        <!--Add CDD model-->
+        <property name="pathToCDDModel" ref="pathToCDDModelFileId"/>
+        <property name="outputFileNameTemplate" ref="rawAnalaysisOutputFileTemplate"/>
+        <property name="fastaFileNameTemplate" ref="fastaFileNameTemplate"/>
+        <property name="retries" value="3"/>
+        <property name="requiresDatabaseAccess" value="false"/>
+    </bean>
+
+    <bean id="stepCDDDeleteFastaFile"
+          class="uk.ac.ebi.interpro.scan.management.model.implementations.DeleteFileStep" parent="abstractCDDStep">
+        <property name="dependsUpon" ref="stepCDDRunBinary"/>
+        <property name="stepDescription" value="Delete the FASTA file following successful run"/>
+        <property name="fileNameTemplate" ref="fastaFileNameTemplate"/>
+    </bean>
+
+    <!-- STEP 3: Parse and persist raw results -->
+
+    <!--<bean id="stepCDDParseOutput"-->
+          <!--class="uk.ac.ebi.interpro.scan.management.model.implementations.cdd.CDDParseStep"-->
+          <!--parent="abstractCDDStep">-->
+        <!--<property name="dependsUpon" ref="stepCDDRunBinary"/>-->
+        <!--<property name="stepDescription" value="Parse the output from CDD binary"/>-->
+        <!--<property name="parser" ref="CDDParser"/>-->
+        <!--<property name="filteredMatchDAO" ref="CDDFilteredMatchDAO"/>-->
+        <!--<property name="serialGroup" value="PARSE_CDD"/>-->
+        <!--<property name="retries" value="3"/>-->
+        <!--<property name="outputFileNameTemplate" ref="rawAnalaysisOutputFileTemplate"/>-->
+    <!--</bean>-->
+
+    <bean id="stepCDDParseAndPersistOutput"
+          class="uk.ac.ebi.interpro.scan.management.model.implementations.cdd.ParseAndPersistCDDOutputStep"
+          parent="abstractCDDStep">
+        <property name="dependsUpon" ref="stepCDDRunBinary"/>
+        <property name="stepDescription"
+                  value="Parse the output from the CDD binary and persist as filtered matches"/>
+        <property name="serialGroup" value="PARSE_CDD"/>
+        <property name="retries" value="3"/>
+
+        <!--<property name="cddBinaryOutputFileName" ref="rawAnalaysisOutputFileTemplate"/>-->
+        <property name="rawMatchDAO">
+            <bean class="uk.ac.ebi.interpro.scan.persistence.CDDFilteredMatchDAOImpl">
+                <constructor-arg ref="CDDSignatureLibraryReleaseVersion"/>
+            </bean>
+        </property>
+        <property name="parser">
+            <bean class="uk.ac.ebi.interpro.scan.io.cdd.match.CDDMatchParser">
+                <constructor-arg ref="CDDSignatureLibraryReleaseVersion"/>
+            </bean>
+        </property>
+        <property name="CDDBinaryOutputFileName" ref="rawAnalaysisOutputFileTemplate"/>
+    </bean>
+
+    <bean id="stepCDDDeleteRawOutput"
+          class="uk.ac.ebi.interpro.scan.management.model.implementations.DeleteFileStep"
+          parent="abstractCDDStep">
+        <property name="dependsUpon" ref="stepCDDParseOutput"/>
+        <property name="stepDescription" value="Delete the analysis output file following successful parsing"/>
+        <property name="fileNameTemplate" ref="rawAnalaysisOutputFileTemplate"/>
+    </bean>
+
+    <!-- ######################## Dependencies ############################  -->
+    <bean id="signatureLibraryReleaseCDD" class="uk.ac.ebi.interpro.scan.model.SignatureLibraryRelease">
+        <constructor-arg type="uk.ac.ebi.interpro.scan.model.SignatureLibrary" value="CDD"/>
+        <constructor-arg type="java.lang.String" ref="CDDSignatureLibraryReleaseVersion"/>
+    </bean>
+
+    <bean id="CDDParser" class="uk.ac.ebi.interpro.scan.io.cdd.CDDRawResultParser">
+    </bean>
+
+    <bean id="CDDSignatureLibraryReleaseVersion" class="java.lang.String">
+        <constructor-arg value="${cdd.signature.library.release}"/>
+    </bean>
+
+    <!-- !!!!!!!!!!!!!!!!!!!!! Dependencies-END !!!!!!!!!!!!!!!!!!!!!!!!!!!!  -->
+</beans>
