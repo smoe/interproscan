@@ -6,7 +6,7 @@
 
     <import resource="classpath:/spring/persistence/persistence-config-context.xml"/>
 
-    <!-- ##### JOB: CDD -  ############################  -->
+    <!-- ##### JOB: CDD  ############################  -->
 
     <bean id="pathToCDDBinaryFileId" class="java.lang.String">
         <constructor-arg value="${binary.cdd.path}"/>
