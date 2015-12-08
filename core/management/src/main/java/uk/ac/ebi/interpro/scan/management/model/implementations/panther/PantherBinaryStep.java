@@ -121,9 +121,12 @@ public final class PantherBinaryStep extends RunBinaryStep {
         String absolutePantherTempDirPath = this.getPerlScriptTempDir();
         LOGGER.debug("pantherTempDir - before update: " + absolutePantherTempDirPath);
         LOGGER.debug("temporaryFileDirectory: " + temporaryFileDirectory);
+        String username = System.getProperty("user.name").toLowerCase();
         if (! this.getPerlScriptTempDir().trim().isEmpty()) {
             if (new File(this.getPerlScriptTempDir()).isAbsolute()) {
                 absolutePantherTempDirPath = this.getPerlScriptTempDir()
+                        + File.separator
+                        + username
                         + File.separator
                         + PANTHER_TEMP_DIR_SUFFIX;
             }else{
@@ -131,6 +134,8 @@ public final class PantherBinaryStep extends RunBinaryStep {
                 absolutePantherTempDirPath = this.getUserDir()
                         + File.separator
                         + this.getPerlScriptTempDir()
+                        + File.separator
+                        + username
                         + File.separator
                         + PANTHER_TEMP_DIR_SUFFIX;
             }
