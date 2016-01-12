@@ -107,7 +107,7 @@ public class Run extends AbstractI5Runner {
         Mode mode = null;
 
         String temporaryDirectory = null;
-        boolean deleteWorkingDirectoryOnCompletion = true;
+        boolean deleteWorkingDirectoryOnCompletion = false;
 
         try {
             //change Loglevel
