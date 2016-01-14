@@ -5,6 +5,8 @@ import uk.ac.ebi.interpro.scan.model.Protein;
 import uk.ac.ebi.interpro.scan.model.Signature;
 import uk.ac.ebi.interpro.scan.model.raw.PantherRawMatch;
 import uk.ac.ebi.interpro.scan.model.raw.RawProtein;
+import uk.ac.ebi.interpro.scan.model.raw.RawMatch;
+import org.apache.log4j.Logger;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -19,7 +21,7 @@ import java.util.Set;
  */
 
 public class PantherFilteredMatchDAOImpl extends FilteredMatchDAOImpl<PantherRawMatch, PantherMatch> implements PantherFilteredMatchDAO {
-
+    private static final Logger LOGGER = Logger.getLogger(PantherFilteredMatchDAOImpl.class.getName());
     /**
      * Sets the class of the model that the DOA instance handles.
      * Note that this has been set up to use constructor injection
@@ -82,6 +84,13 @@ public class PantherFilteredMatchDAOImpl extends FilteredMatchDAOImpl<PantherRaw
                         throw new IllegalStateException("Cannot find PANTHER signature " + currentSignatureAc + " in the database.");
                     }
                 }
+                LOGGER.debug(" protein length = " + protein.getSequenceLength()
+                            + " start location of raw match : " + rawMatch.getLocationStart() + " end location of raw match : " +  rawMatch.getLocationEnd());
+                if (! pantherLocationWithinRange(protein, rawMatch)){
+                    LOGGER.error("PANTHER match is out of range: "
+                            + " protein length = " + protein.getSequenceLength()
+                            + " raw match : " + rawMatch.toString());
+                }
                 locations.add(new PantherMatch.PantherLocation(rawMatch.getLocationStart(), rawMatch.getLocationEnd()));
                 lastRawMatch = rawMatch;
             }
@@ -98,5 +107,11 @@ public class PantherFilteredMatchDAOImpl extends FilteredMatchDAOImpl<PantherRaw
                 entityManager.persist(match);       // Persist the last one
             }
         }
+    }
+    public boolean pantherLocationWithinRange(Protein protein, RawMatch rawMatch){
+        if (protein.getSequenceLength() < rawMatch.getLocationEnd() || protein.getSequenceLength() < rawMatch.getLocationStart()){
+            return false;
+        }
+        return true;
     }
 }

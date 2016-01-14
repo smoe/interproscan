@@ -259,7 +259,7 @@ foreach my $seqId (keys %$allScores) {
 }
 
 ### remove the temp dir files
-remove_tree($tmpdirPath)  or die "Cannot remove_tree '$tmpdirPath' : $!";
+#remove_tree($tmpdirPath)  or die "Cannot remove_tree '$tmpdirPath' : $!";
 
 ##
 

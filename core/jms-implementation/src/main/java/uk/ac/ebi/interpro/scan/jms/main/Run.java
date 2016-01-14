@@ -68,7 +68,7 @@ public class Run extends AbstractI5Runner {
 
     String temporaryDirectory = null;
 
-    private boolean deleteWorkingDirectoryOnCompletion = true;
+    private boolean deleteWorkingDirectoryOnCompletion = false;
 
     static {
         //Usual I5 options
