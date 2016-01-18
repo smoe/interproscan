@@ -120,12 +120,12 @@
         <property name="requiresDatabaseAccess" value="false"/>
     </bean>
 
-    <bean id="stepPantherDeleteFastaFile"
-          class="uk.ac.ebi.interpro.scan.management.model.implementations.DeleteFileStep" parent="abstractPantherStep">
-        <property name="dependsUpon" ref="stepPantherRunBinary"/>
-        <property name="stepDescription" value="Delete the FASTA file following successful run"/>
-        <property name="fileNameTemplate" ref="fastaFileNameTemplate"/>
-    </bean>
+    <!--<bean id="stepPantherDeleteFastaFile"-->
+          <!--class="uk.ac.ebi.interpro.scan.management.model.implementations.DeleteFileStep" parent="abstractPantherStep">-->
+        <!--<property name="dependsUpon" ref="stepPantherRunBinary"/>-->
+        <!--<property name="stepDescription" value="Delete the FASTA file following successful run"/>-->
+        <!--<property name="fileNameTemplate" ref="fastaFileNameTemplate"/>-->
+    <!--</bean>-->
 
     <!-- STEP 3: Parse and persist raw results -->
     <bean id="stepPantherParseOutput"
@@ -146,13 +146,13 @@
         <property name="outputFileNameTemplate" ref="rawAnalaysisOutputFileTemplate"/>
     </bean>
 
-    <bean id="stepPantherDeleteRawOutput"
-          class="uk.ac.ebi.interpro.scan.management.model.implementations.DeleteFileStep"
-          parent="abstractPantherStep">
-        <property name="dependsUpon" ref="stepPantherParseOutput"/>
-        <property name="stepDescription" value="Delete the analysis output file following successful parsing"/>
-        <property name="fileNameTemplate" ref="rawAnalaysisOutputFileTemplate"/>
-    </bean>
+    <!--<bean id="stepPantherDeleteRawOutput"-->
+          <!--class="uk.ac.ebi.interpro.scan.management.model.implementations.DeleteFileStep"-->
+          <!--parent="abstractPantherStep">-->
+        <!--<property name="dependsUpon" ref="stepPantherParseOutput"/>-->
+        <!--<property name="stepDescription" value="Delete the analysis output file following successful parsing"/>-->
+        <!--<property name="fileNameTemplate" ref="rawAnalaysisOutputFileTemplate"/>-->
+    <!--</bean>-->
 
     <!-- STEP 4: Filter and persist filtered results -->
     <bean id="stepPantherPostProcessing"
