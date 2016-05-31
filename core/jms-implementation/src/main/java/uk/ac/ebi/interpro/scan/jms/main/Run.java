@@ -170,7 +170,7 @@ public class Run extends AbstractI5Runner {
             //Deal with user supplied config file from the command line
             String systemInterproscanProperties = userInterproscan5Properties;
             if (System.getProperty("system.interproscan.properties") == null) {
-                LOGGER.debug("USer has not supplied any properties file");
+                LOGGER.debug("User has not supplied any properties file");
                 System.setProperty("system.interproscan.properties", systemInterproscanProperties);
             }
 
