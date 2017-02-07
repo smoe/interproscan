@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     struct site_match *site_hits = NULL; // list of hits parsed from tblout
     struct no_hit *no_hits = NULL; // list of hits parsed from tblout
     FILE *fout;
-    char *hmmerout_fn, *tblout_fn, *alignments_fn, *site_info_fn, *hmmer_path, *output_fn, *format;
+    char *hmmerout_fn, *tblout_fn, *alignments_fn, *site_info_fn, *output_fn, *format;
 
     int n_dom_hits = 0;
     int n_site_hits = 0;
@@ -34,9 +34,9 @@ int main(int argc, char **argv)
     int n_matched_families = 0;
     char **matched_family_ids;
 
-    hmmer_path = format = hmmerout_fn = output_fn = tblout_fn = alignments_fn = site_info_fn = NULL;
+    format = hmmerout_fn = output_fn = tblout_fn = alignments_fn = site_info_fn = NULL;
 
-    get_options_post(argc, argv, &only_matches, &hmmer_path, &hmmerout_fn, &output_fn, &tblout_fn, &alignments_fn, &site_info_fn, &format);
+    get_options_post(argc, argv, &only_matches, &hmmerout_fn, &output_fn, &tblout_fn, &alignments_fn, &site_info_fn, &format);
 
     if (! alignments_fn || ! hmmerout_fn || ! &tblout_fn || ! site_info_fn) {
         show_help(argv[0]);
@@ -74,8 +74,6 @@ int main(int argc, char **argv)
     free(ali_present);
     free(tblout_fn);
     free(output_fn);
-    if (hmmer_path)
-        free(hmmer_path);
     if (format)
         free(format);
     free(hmmerout_fn);
@@ -122,7 +120,7 @@ void output_dom_sites_by_target(struct hmmer_dom *dom_hits, int n_dom_hits, stru
             printf("Domains:\n");
             while (h < n_dom_hits && ! strcmp(dom_hits[h].target_ac, this_target))
                 output_dom_hit(dom_hits[h++], 1, 0);
-        } else if (cmp > 0) { // next target in alph order is a domain hit
+        } else if (cmp > 0) { // next target in alph order is a site hit
             free(this_target);
             this_target = strdup(site_hits[s].target_ac);
             printf("Sequence: %s\n", this_target);
@@ -259,8 +257,7 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
     // array to map alignment coords to sequence coords
     pos_map = (int **)malloc(n_seq * sizeof(int *));
     for (s = 0; s < n_seq; s++) {
-        // seqs_matched[s] = family.n_features; // assume that a sequence matches all the features; it won't of course. this is decremented for each feature a sequence doesn't match. zero => no match to any feature
-        seqs_matched[s] = 0; // assume that a sequence matches all the features; it won't of course. this is decremented for each feature a sequence doesn't match. zero => no match to any feature
+        seqs_matched[s] = 0; // counter for number of sites matched by that sequence
         pos_map[s] = (int *)malloc(alen * sizeof(int));
         spos = get_start_from_nse(msa->sqname[s]);
         for (apos = 0; apos < alen; apos++) {
@@ -361,7 +358,7 @@ void rf_to_array(ESL_MSA *msa, int *rf_array, int alen)
 }
 
 
-void get_options_post(int argc, char **argv, int *only_matches, char **hmmer_path, char **hmmer_out, char **output, char **dom_file, char **alignments, char **site_info, char **format)
+void get_options_post(int argc, char **argv, int *only_matches, char **hmmer_out, char **output, char **dom_file, char **alignments, char **site_info, char **format)
 {
     static struct option long_options[] =
     {
@@ -409,8 +406,6 @@ void get_options_post(int argc, char **argv, int *only_matches, char **hmmer_pat
                         else
                             path_concat(path, optarg, dom_file);
                  break;
-             case 'p' : *hmmer_path = strdup(optarg);
-                 break;
              case 'h' : {
                         show_help(argv[0]);
                         exit(0);
@@ -423,8 +418,6 @@ void get_options_post(int argc, char **argv, int *only_matches, char **hmmer_pat
              }
         }
     }
-    if (*hmmer_path == NULL && ((path = getenv("HMMER_PATH")) != NULL))
-        *hmmer_path = strdup(path);
 }
 
 

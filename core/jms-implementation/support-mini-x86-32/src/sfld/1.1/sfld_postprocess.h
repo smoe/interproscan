@@ -81,7 +81,7 @@ void output_dom_sites_by_target(struct hmmer_dom *, int, struct site_match *, in
 void output_dom_sites_as_tab(struct hmmer_dom *, int, struct site_match *, int);
 void read_domtblout(char *, struct hmmer_dom **, int *);
 void family_ids_from_hmmer_out(char *, char ***, int *);
-void get_options_post(int argc, char **argv, int *only_matches, char **hmmer_path, char **hmmerout, char **output, char **dom_file, char **alignments, char **site_info, char **format);
+void get_options_post(int argc, char **argv, int *only_matches, char **hmmerout, char **output, char **dom_file, char **alignments, char **site_info, char **format);
 void filter_no_hits(struct hmmer_dom *dom_hits, int n_dom_hits, struct no_hit *no_hits, int n_no_hits);
 void strip_dom_se(struct hmmer_dom *dom_hits, int n_dom_hits);
 int parse_hmmer_dom(struct hmmer_dom *, char *);
