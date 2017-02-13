@@ -87,8 +87,8 @@ sub read_fasta {
   return 1;
 }
 
-sub run_hmmscan {
-  my ($infile, $sf_hmm, $pirsf_data, $matches, $children, $path, $cpu) = @_;
+sub run_hmmer {
+  my ($infile, $sf_hmm, $pirsf_data, $matches, $children, $path, $cpu, $hmmer) = @_;
   #Change to using table output.
   #system("$hmmscan --domtblout table -E 0.01 --acc $sf_hmm $infile")
   my $dir  = tempdir( CLEANUP => 1 );  
@@ -101,7 +101,10 @@ sub run_hmmscan {
   if($cpu and $cpu =~ /\d+/){
     $cpu = "--cpu $cpu";
   }
-  $path .= 'hmmscan';
+
+  $path .= "$hmmer";
+
+
   #Run HMM search for full-length models and get information
   my @sf_out=` $path $cpu --domtblout $dir/table -E 0.01 --acc $sf_hmm $infile`;
 
@@ -117,7 +120,17 @@ sub run_hmmscan {
   my ($pirsf_acc, $seq_acc, @keep_row);
   ROW:
   for (my $i = 0; $i <= $#results; $i++){
+    
     my @row = split(/\s+/, $results[$i], 24);
+    if($hmmer eq 'hmmsearch'){
+      my @reorder = @row[0..5];
+      $row[0] = $reorder[3];
+      $row[1] = $reorder[4];
+      $row[2] = $reorder[5];
+      $row[3] = $reorder[0];
+      $row[4] = $reorder[1];
+      $row[5] = $reorder[2];
+    }
     if(defined($pirsf_acc) and defined($seq_acc)){
       if( ($row[1] ne $pirsf_acc) or ($row[3] ne $seq_acc)){
         #The sequence or the profile accession has changed.
@@ -130,7 +143,6 @@ sub run_hmmscan {
       }
     }
     
-    
     $pirsf_acc = $row[1]; # 
     $seq_acc = $row[3];
     push(@keep_row, \@row);
@@ -140,7 +152,6 @@ sub run_hmmscan {
 
 sub process_hit {
    my ($rows, $children, $store, $promote, $pirsf_data, $matches) = @_;
-   use DDP;
    #Just get the key bits of information out.
    my($pirsf_acc, $seq_acc, $seq_leng, $seq_start, $seq_end,
        $hmm_start, $hmm_end) = @{$rows->[0]}[1,3,5,15,16,17,18];

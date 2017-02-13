@@ -72,7 +72,7 @@ my $matches = {};
 PIRSF::read_fasta($input, $matches) if($verbose);
 
 #Now run the search.
-PIRSF::run_hmmscan($input, $sf_hmm, $pirsf_data, $matches, $children, $hmmer_path, $cpus);
+PIRSF::run_hmmer($input, $sf_hmm, $pirsf_data, $matches, $children, $hmmer_path, $cpus, $mode);
 
 #Now determine the best matches and subfamily matches.
 my $bestMatches = PIRSF::post_process($matches, $pirsf_data);
