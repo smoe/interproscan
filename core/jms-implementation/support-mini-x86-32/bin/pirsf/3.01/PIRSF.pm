@@ -70,8 +70,6 @@ sub read_pirsf_dat {
   #return data structure
   return ($data, $child);
 }
-
-
 #This is not actually need, should be in the HMMER output (RDF).
 sub read_fasta { 
   my ($infile, $matches) = @_;
@@ -107,73 +105,109 @@ sub run_hmmscan {
   #Run HMM search for full-length models and get information
   my @sf_out=` $path $cpu --domtblout $dir/table -E 0.01 --acc $sf_hmm $infile`;
 
+  my @results;
   open(T, '<', "$dir/table") or die "Failed to open table\n";
   while(<T>){
-    chomp;
     next if( substr($_, 0, 1) eq '#');
-    my @row = split(/\s+/, $_, 24);
-    my $pirsf_acc = $row[1]; # 
-    my $seq_acc = $row[3];
-    my $seq_leng = $row[5];
-    my $seq_start = $row[17];
-    my $seq_end = $row[18];
-    my $score = $row[13];
-    my $evalue = $row[12]; #i-Evalue for the domain
-    #Overall length
-    my $ovl = ($seq_end - $seq_start + 1)/$seq_leng;
-  
-    if(! defined($store->{$seq_acc})){
-      $store = {};
-      $store->{$seq_acc}={};
-    }
-
-    #Length deviation
-    my $ld = abs($seq_leng - $pirsf_data->{$pirsf_acc}->{meanL});
-    if($children->{$pirsf_acc}){
-      #If a sub-family, process slightly differently. Only consider the score.
-      if($score >=$pirsf_data->{$pirsf_acc}->{minS}){
-        
-        #No work out which family we may need to promote and check to see if
-        #we have seen it nor not
-        my $parent = $children->{$pirsf_acc};
-        if($store->{$seq_acc}->{$parent}){
-          $matches->{$seq_acc}->{$parent} = $store->{$seq_acc}->{$parent};
-        }else{
-          $promote{$seq_acc.'-'.$parent} = 1;
-        }
-        #Store the sub family match.
-        $matches->{$seq_acc}->{$pirsf_acc}->{evalue}=$evalue;
-        $matches->{$seq_acc}->{$pirsf_acc}->{data}=\@row;
-      }
-    }elsif($ovl>=0.8 && ($score >=$pirsf_data->{$pirsf_acc}->{minS}) && ($ld<3.5*$pirsf_data->{$pirsf_acc}->{stdL} ||$ld< 50 )){ 
-      #Looks like everything passes the threshold of length, score and standard deviations of length.
-      $matches->{$seq_acc}->{$pirsf_acc}->{evalue}=$evalue;
-      $matches->{$seq_acc}->{$pirsf_acc}->{data}=\@row;
-    }elsif( defined ( $promote{$seq_acc.'-'.$pirsf_acc} ) ){
-      #Do we promote this?
-      $matches->{$seq_acc}->{$pirsf_acc}->{evalue}=$evalue;
-      $matches->{$seq_acc}->{$pirsf_acc}->{data}=\@row;
-    }else{
-      #Store for later in case there is a subfamily match.
-      $store->{$seq_acc}->{$pirsf_acc}->{evalue}=$evalue;
-      $store->{$seq_acc}->{$pirsf_acc}->{data}=\@row;
-    }
+    chomp;
+    push(@results, $_);
   }
   close(T);
+
+  my ($pirsf_acc, $seq_acc, @keep_row);
+  ROW:
+  for (my $i = 0; $i <= $#results; $i++){
+    my @row = split(/\s+/, $results[$i], 24);
+    if(defined($pirsf_acc) and defined($seq_acc)){
+      if( ($row[1] ne $pirsf_acc) or ($row[3] ne $seq_acc)){
+        #The sequence or the profile accession has changed.
+        my @pRow = @keep_row; 
+        process_hit(\@pRow, $children, $store, \%promote, $pirsf_data, $matches);
+        @keep_row = ();
+      }else{
+       push(@keep_row, \@row);
+       next ROW;
+      }
+    }
+    
+    
+    $pirsf_acc = $row[1]; # 
+    $seq_acc = $row[3];
+    push(@keep_row, \@row);
+   }
+   process_hit(\@keep_row, $children, $store, \%promote, $pirsf_data, $matches);
+}
+
+sub process_hit {
+   my ($rows, $children, $store, $promote, $pirsf_data, $matches) = @_;
+   use DDP;
+   #Just get the key bits of information out.
+   my($pirsf_acc, $seq_acc, $seq_leng, $seq_start, $seq_end,
+       $hmm_start, $hmm_end) = @{$rows->[0]}[1,3,5,15,16,17,18];
+  my $score = 0;
+  #Now loop over all rows that are left, check that we do not have a smaller start or larger end for the sequence/hmm.
+  foreach my $row (@{$rows}){
+    $score += $row->[13];
+    $seq_start = ($row->[17] < $seq_start ? $row->[17] : $seq_start); 
+    $seq_end   = ($row->[18] > $seq_end   ? $row->[18] : $seq_end); 
+    $hmm_start = ($row->[15] < $hmm_start ? $row->[15] : $hmm_start); 
+    $hmm_end   = ($row->[16] > $hmm_end   ? $row->[16] : $hmm_end);
+  }
+
+  #Overall length
+  my $ovl = ($seq_end - $seq_start + 1)/$seq_leng;
+  my $r   = ($hmm_end - $hmm_start)/ ($seq_end - $seq_start); #Ratio over coverage of sequence and profile HMM.   
+  if(! defined($store->{$seq_acc})){
+    $store = {};
+    $store->{$seq_acc}={};
+  }
+
+  #Length deviation
+  my $ld = abs($seq_leng - $pirsf_data->{$pirsf_acc}->{meanL});
+  if($children->{$pirsf_acc}){
+    #If a sub-family, process slightly differently. Only consider the score.
+    if($r > 0.67 && $score >=$pirsf_data->{$pirsf_acc}->{minS}){
+        
+      #No work out which family we may need to promote and check to see if
+      #we have seen it nor not
+      my $parent = $children->{$pirsf_acc};
+      if($store->{$seq_acc}->{$parent}){
+        $matches->{$seq_acc}->{$parent} = $store->{$seq_acc}->{$parent};
+      }else{
+        $promote->{$seq_acc.'-'.$parent} = 1;
+      }
+      #Store the sub family match.
+      $matches->{$seq_acc}->{$pirsf_acc}->{score}=$score;
+      $matches->{$seq_acc}->{$pirsf_acc}->{data}=$rows;
+    }
+  }elsif($r > 0.67 && $ovl>=0.8 && 
+          ($score >=$pirsf_data->{$pirsf_acc}->{minS}) && 
+          ($ld<3.5*$pirsf_data->{$pirsf_acc}->{stdL} || $ld < 50 ) ){ 
+    #Looks like everything passes the threshold of length, score and standard deviations of length.
+    $matches->{$seq_acc}->{$pirsf_acc}->{score}=$score;
+    $matches->{$seq_acc}->{$pirsf_acc}->{data}=$rows;
+  }elsif( defined ( $promote->{$seq_acc.'-'.$pirsf_acc} ) ){
+    #Do we promote this?
+    $matches->{$seq_acc}->{$pirsf_acc}->{score}=$score;
+    $matches->{$seq_acc}->{$pirsf_acc}->{data}=$rows;
+  }else{
+    #Store for later in case there is a subfamily match.
+    $store->{$seq_acc}->{$pirsf_acc}->{score}=$score;
+    $store->{$seq_acc}->{$pirsf_acc}->{data}=$rows;
+  }
   return 1;
 }
 
 sub post_process {
   my($matches, $pirsf_data) = @_;
-
   my $bestMatch; 
   #Sort all matches and find the smallest evalue. 
   foreach my $seq (keys %$matches){
     $bestMatch->{$seq} = {};#This enables us to capure no matches.
 
     #If there are matches.....sort them on evalue.
-    my @matchesSort = sort{ $matches->{$seq}->{$a}->{evalue} <=> 
-                            $matches->{$seq}->{$b}->{evalue}}(keys %{$matches->{$seq}});
+    my @matchesSort = sort{ $matches->{$seq}->{$b}->{score} <=> 
+                            $matches->{$seq}->{$a}->{score}}(keys %{$matches->{$seq}});
     foreach my $pirsf_acc (@matchesSort){
       next if($pirsf_acc =~ /^PIRSF5/); #Ignore sub-families 
 
@@ -216,11 +250,11 @@ sub print_output {
       print "Query Sequence: $seq ";
       if(exists($bestMatch->{$seq}->{sf})){
         my $sf_data = $bestMatch->{$seq}->{sf};
-        print "matches $sf_data->[1]: $pirsf_data->{$sf_data->[1]}->{name}\n";
+        print "matches $sf_data->[0]->[1]: $pirsf_data->{$sf_data->[0]->[1]}->{name}\n";
         _print_report($sf_data);
         if($bestMatch->{$seq}->{sub}){
           my $sub_data = $bestMatch->{$seq}->{sub};
-          print " and matches Sub-Family $sub_data->[1]: $pirsf_data->{$sub_data->[1]}->{name}\n";
+          print " and matches Sub-Family $sub_data->[0]->[1]: $pirsf_data->{$sub_data->[0]->[1]}->{name}\n";
           _print_report($sub_data);
         }    
       }else{
@@ -240,34 +274,32 @@ sub print_output {
     }
   }
   
-  #Output
-  #if ($SF) 
-  #{$out=" matches $SF: $name{$SF}\n$sf_line\n$sf_out{$SF}";}
-  #else { $out="No Match\n";}
-  #print "Query sequence: $id $out";
-  #if ($SF_subf)
-  #{print " and matches Sub-Family $SF_subf: $name{$SF_subf}\n$sf_line_subf\n$sf_out_subf{$SF_subf}";}
 }
 
 sub _print_report {
-  my($data) = @_;
-  my ($hmmMatch, $seqMatch, $envMatch) = _matchBounds($data);
+  my($all_data) = @_;
   
   print sprintf("%4s  %7s%6s%10s%10s%8s%8s   %8s%8s   %8s%8s   %5s\n" , 
                 '#', 'score', 'bias', 'c-Evalue', 'i-Evalue', 'hmmfrom', 
                 'hmm to', 'alifrom', 'ali to', 'envfrom', 'env to', 'acc' );
   
-    
-  print sprintf("%4s%2s%7s%6s%10s%10s%8s%8s%3s%8s%8s%3s%8s%8s%3s%5s\n" , 
-                '1','!', $data->[13], $data->[14], $data->[11], $data->[12], $data->[15], $data->[16], $hmmMatch,
+  my $cnt = 1;
+  foreach my $data (@{$all_data}){  
+    my ($hmmMatch, $seqMatch, $envMatch) = _matchBounds($data);
+    print sprintf("%4s%2s%7s%6s%10s%10s%8s%8s%3s%8s%8s%3s%8s%8s%3s%5s\n" , 
+                $cnt,'!', $data->[13], $data->[14], $data->[11], $data->[12], $data->[15], $data->[16], $hmmMatch,
                 $data->[17], $data->[18], $seqMatch, $data->[19], $data->[20], $envMatch, $data->[21]);   
+    $cnt++;
+  }
 }
 
 sub _print_i5 {
-  my ($data, $seq) = @_;  
-  my ($hmmMatch, $seqMatch, $envMatch) = _matchBounds($data);
+  my ($all_data, $seq) = @_;  
+ 
+  foreach my $data (@$all_data){
+    my ($hmmMatch, $seqMatch, $envMatch) = _matchBounds($data);
   
-  my $line = join("\t", 
+    my $line = join("\t", 
                         $data->[20], #LOCATION_END
                         $data->[19], #LOCATION_START
                         $data->[1],  #MODEL_ID
@@ -285,7 +317,8 @@ sub _print_i5 {
                         $data->[19], #ENVELOPE_START
                         $data->[21], #EXPECTED_ACCURACY
                         $data->[8]); #FULL_SEQUENCE_BIAS
-   print "$line\n";
+    print "$line\n";
+  }
 }
 
 sub _matchBounds{
