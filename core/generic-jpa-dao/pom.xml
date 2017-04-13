@@ -43,17 +43,17 @@
         <!-- Hibernate -->
         <dependency>
             <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>${hibernate.entity.manager.version}</version>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.core.version}</version>
         </dependency>
         <!-- Don't use in-built hibernate connection pooling (not for production use). Use c3p0 connection pool instead -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-c3p0</artifactId>
-            <version>${hibernate.entity.manager.version}</version>
+            <version>${hibernate.core.version}</version>
         </dependency>
         <dependency>
-            <groupId>c3p0</groupId>
+            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>${c3p0.version}</version>
         </dependency>
