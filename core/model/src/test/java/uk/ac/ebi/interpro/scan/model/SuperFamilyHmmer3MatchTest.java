@@ -1,7 +1,7 @@
 package uk.ac.ebi.interpro.scan.model;
 
 import junit.framework.TestCase;
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
 
 import java.util.Arrays;

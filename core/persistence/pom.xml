@@ -70,9 +70,9 @@
 
         <!-- Test database implementation (in memory for Junit tests) -->
         <dependency>
-            <groupId>hsqldb</groupId>
+            <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>1.8.0.10</version>
+            <version>${hsqldb.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -129,7 +129,7 @@
             </activation>
             <properties>
                 <mvn.i5.database.driver>org.hsqldb.jdbcDriver</mvn.i5.database.driver>
-                <mvn.i5.database.connection.url>jdbc:hsqldb:mem:mem:testmodel</mvn.i5.database.connection.url>
+                <mvn.i5.database.connection.url>jdbc:hsqldb:mem:testmodel</mvn.i5.database.connection.url>
                 <mvn.i5.database.username>sa</mvn.i5.database.username>
                 <mvn.i5.database.password></mvn.i5.database.password>
                 <mvn.hibernate.dialect>org.hibernate.dialect.HSQLDialect</mvn.hibernate.dialect>

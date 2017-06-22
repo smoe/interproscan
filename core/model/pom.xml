@@ -34,7 +34,7 @@
 
     <properties>
         <mvn.i5.database.driver>org.hsqldb.jdbcDriver</mvn.i5.database.driver>
-        <mvn.i5.database.connection.url>jdbc:hsqldb:mem:mem:testmodel</mvn.i5.database.connection.url>
+        <mvn.i5.database.connection.url>jdbc:hsqldb:mem:testmodel</mvn.i5.database.connection.url>
         <!--<mvn.i5.database.connection.url>jdbc:hsqldb:hsql://localhost/i5</mvn.i5.database.connection.url>-->
         <mvn.i5.database.username>sa</mvn.i5.database.username>
         <mvn.i5.database.password></mvn.i5.database.password>
@@ -57,29 +57,29 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.8.6</version>
+            <version>2.8.9</version>
         </dependency>
 
         <!-- Apache Commons -->
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.6</version>
         </dependency>
 
         <dependency>
             <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>${hibernate.entity.manager.version}</version>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
         </dependency>
         <!-- Don't use in-built hibernate connection pooling (not for production use). Use c3p0 connection pool instead -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-c3p0</artifactId>
-            <version>${hibernate.entity.manager.version}</version>
+            <version>${hibernate.version}</version>
         </dependency>
         <dependency>
-            <groupId>c3p0</groupId>
+            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>${c3p0.version}</version>
         </dependency>
@@ -120,7 +120,7 @@
         </dependency>
 
         <dependency>
-            <groupId>hsqldb</groupId>
+            <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
             <version>${hsqldb.version}</version>
             <scope>test</scope>

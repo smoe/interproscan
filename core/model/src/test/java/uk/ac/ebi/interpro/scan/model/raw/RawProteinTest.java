@@ -2,7 +2,7 @@ package uk.ac.ebi.interpro.scan.model.raw;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import uk.ac.ebi.interpro.scan.model.SignatureLibrary;
 
 /**
