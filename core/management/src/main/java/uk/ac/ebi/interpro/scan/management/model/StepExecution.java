@@ -5,6 +5,7 @@ import uk.ac.ebi.interpro.scan.management.dao.StepExecutionDAO;
 import uk.ac.ebi.interpro.scan.model.Chunker;
 import uk.ac.ebi.interpro.scan.model.ChunkerSingleton;
 import uk.ac.ebi.interpro.scan.model.KeyGen;
+import uk.ac.ebi.interpro.scan.util.Utilities;
 
 import javax.persistence.*;
 import java.io.PrintWriter;
@@ -175,6 +176,7 @@ public class StepExecution implements Serializable, Comparable<StepExecution> {
         state = StepExecutionState.STEP_EXECUTION_SUBMITTED;
         submittedTime = new Date();
         stepExecutionDAO.update(this);
+        Utilities.verboseLog(10, "StepExecution: Step instance " + stepInstance.toString() + " submitted");
     }
 
     public void setToRun() {
@@ -183,6 +185,7 @@ public class StepExecution implements Serializable, Comparable<StepExecution> {
         }
         state = StepExecutionState.STEP_EXECUTION_RUNNING;
         startedRunningTime = new Date();
+        Utilities.verboseLog(10, "StepExecution: Step instance " + stepInstance.toString() + " running");
     }
 
     /**
@@ -194,6 +197,8 @@ public class StepExecution implements Serializable, Comparable<StepExecution> {
         }
         state = StepExecutionState.STEP_EXECUTION_SUCCESSFUL;
         completedTime = new Date();
+        Utilities.verboseLog(10, "StepExecution: Step instance " + stepInstance.toString() + " completed " + completedTime.toString());
+
     }
 
     /**
@@ -215,6 +220,7 @@ public class StepExecution implements Serializable, Comparable<StepExecution> {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Exception StackTrace recorded by the failed StepExecution, to be returned to the Master and stored: " + this.getException());
                 }
+                Utilities.verboseLog(10, "StepExecution: Step instance " + stepInstance.getStepId() + " failed ");
             } finally {
                 if (pw != null) {
                     pw.close();
