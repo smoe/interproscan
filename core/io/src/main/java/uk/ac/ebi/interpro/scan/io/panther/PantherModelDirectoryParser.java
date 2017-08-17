@@ -59,7 +59,7 @@ public class PantherModelDirectoryParser extends AbstractModelFileParser {
     public SignatureLibraryRelease parse() throws IOException {
         LOGGER.debug("Starting to parse hmm file.");
         SignatureLibraryRelease release = new SignatureLibraryRelease(library, releaseVersion);
-<<<<<<< HEAD
+
         Map<String, String> familyIdFamilyNameMap = readInPantherFamilyNames();
 
         LOGGER.debug(familyIdFamilyNameMap);
