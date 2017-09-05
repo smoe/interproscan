@@ -1,7 +1,9 @@
 package uk.ac.ebi.interpro.scan.jms.master;
 
 import org.apache.log4j.Logger;
+import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import uk.ac.ebi.interpro.scan.jms.stats.StatsUtil;
+import uk.ac.ebi.interpro.scan.management.model.implementations.RunBinaryStep;
 import uk.ac.ebi.interpro.scan.management.model.implementations.stepInstanceCreation.StepInstanceCreatingStep;
 import uk.ac.ebi.interpro.scan.management.model.implementations.WriteOutputStep;
 import uk.ac.ebi.interpro.scan.util.Utilities;
@@ -12,6 +14,7 @@ import uk.ac.ebi.interpro.scan.management.model.implementations.prosite.RunPsSca
 
 import javax.jms.JMSException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 
@@ -27,6 +30,12 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
 
     private StatsUtil statsUtil;
 
+    private DefaultMessageListenerContainer workerQueueJmsContainer;
+
+    public StandaloneBlackBoxMaster(DefaultMessageListenerContainer workerQueueJmsContainer) {
+        this.workerQueueJmsContainer = workerQueueJmsContainer;
+    }
+
     @Override
     public void run() {
         final long now = System.currentTimeMillis();
@@ -41,6 +50,47 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
             System.out.println(Utilities.getTimeNow() + " DEBUG inVmWorkers min:" + getConcurrentInVmWorkerCount() + " max: " + getMaxConcurrentInVmWorkerCount());
             Utilities.verboseLog(10, "temp dir: " + getWorkingTemporaryDirectoryPath());
         }
+
+        Utilities.verboseLog("Old values - inVmWorkers min: " + workerQueueJmsContainer.getConcurrentConsumers() + " max: " + workerQueueJmsContainer.getMaxConcurrentConsumers());
+
+        //if user has specified CPU value
+
+        //need more testing
+
+        if (! (getMaxConcurrentInVmWorkerCount() == workerQueueJmsContainer.getMaxConcurrentConsumers())){
+            int minNumberOfCPUCores = getMaxConcurrentInVmWorkerCount();
+//            if (getMaxConcurrentInVmWorkerCount() > 4){
+//                minNumberOfCPUCores = getMaxConcurrentInVmWorkerCount() / 2;
+//            }
+//            if (getMaxConcurrentInVmWorkerCount() < getConcurrentInVmWorkerCount()) {
+//                minNumberOfCPUCores = getMaxConcurrentInVmWorkerCount();
+//            }
+            workerQueueJmsContainer.setConcurrentConsumers(minNumberOfCPUCores);
+            workerQueueJmsContainer.setMaxConcurrentConsumers(getMaxConcurrentInVmWorkerCount());
+            Utilities.verboseLog("minNumberOfCPUCores: " + minNumberOfCPUCores
+                    + " MaxConcurrentInVmWorkerCount: " + getMaxConcurrentInVmWorkerCount() );
+        }else{
+            //set the minconsumercount to value given by user in the properties file
+            //TODO check if this is necessary as the container should handle dynamic scaling
+            //workerQueueJmsContainer.setConcurrentConsumers(getMaxConcurrentInVmWorkerCount());
+
+            /*
+            //the following doesnt work as expected so we will just set max = min
+            int minNumberOfCPUCores = getConcurrentInVmWorkerCount();
+            if (getMaxConcurrentInVmWorkerCount() > 4){
+                minNumberOfCPUCores = getMaxConcurrentInVmWorkerCount() / 2;
+                workerQueueJmsContainer.setConcurrentConsumers(minNumberOfCPUCores);
+            }
+            */
+        }
+
+
+
+        Utilities.verboseLog("New values - inVmWorkers min: " + workerQueueJmsContainer.getConcurrentConsumers()
+                + " max: " + workerQueueJmsContainer.getMaxConcurrentConsumers()
+                + " schedlued: " + workerQueueJmsContainer.getScheduledConsumerCount()
+                + " active: " + workerQueueJmsContainer.getActiveConsumerCount()  );
+
         long nowAfterLoadingDatabase = now;
         try {
             loadInMemoryDatabase();
@@ -57,6 +107,11 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
             if(verboseLog) {
                 System.out.println(Utilities.getTimeNow() + " DEBUG step instances: " + stepInstanceDAO.count());
             }
+            //initialise slow steps
+            List<String> slowSteps = new ArrayList<String>();
+            slowSteps.add("stepPantherRunHmmer3");
+            slowSteps.add("stepSMARTRunBinary");
+            slowSteps.add("stepPrositeProfilesRunBinary");
             // If there is an embeddedWorkerFactory (i.e. this Master is running in stand-alone mode)
             // stop running if there are no StepInstances left to complete.
             boolean controlledLogging = false;
@@ -97,6 +152,18 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
                             priority = HIGH_PRIORITY;
                         }
 
+                        //different rules for priority
+                        if(step instanceof WriteFastaFileStep){
+                            priority = HIGHEST_PRIORITY;
+                        }else if (slowSteps.contains(step.getId())){
+                            priority = HIGHER_PRIORITY;
+                        }else if (step instanceof RunBinaryStep){
+                            priority = HIGH_PRIORITY;
+                        }else if (step.getSerialGroup() == null){
+                            priority = LOW_PRIORITY;
+                        }else {
+                            priority = LOW_PRIORITY;
+                        }
                         //if inteproscan is onthe last step, watermark this point
                         if (step instanceof WriteOutputStep) {
                             Utilities.verboseLog("Processing WriteOutputStep ..." );
@@ -117,6 +184,7 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
                         controlledLogging = false;
                     }
                 }
+                //Utilities.verboseLog("runStatus:" + runStatus);
                 //check what is not completed
                 long totalStepInstances = stepInstanceDAO.count();
                 int totalUnfinishedStepInstances = stepInstanceDAO.retrieveUnfinishedStepInstances().size();
@@ -130,6 +198,13 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
                     }
                     controlledLogging = true;
                 }
+//                Utilities.verboseLog("Total StepInstances: " + totalStepInstances +
+//                        ", left to run: " + totalUnfinishedStepInstances);
+//                Utilities.verboseLog("MaxConcurrentConsumers: " + workerQueueJmsContainer.getMaxConcurrentConsumers()
+//                       + " min ConsumerCount: " + workerQueueJmsContainer.getConcurrentConsumers()
+//                        +  " ActiveConsumerCount: " + workerQueueJmsContainer.getActiveConsumerCount()
+//                         +  " ScheduledConsumerCount: " + workerQueueJmsContainer.getScheduledConsumerCount());
+
                 //report progress
                 statsUtil.setTotalJobs(totalStepInstances);
                 statsUtil.setUnfinishedJobs(totalUnfinishedStepInstances);

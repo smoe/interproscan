@@ -16,6 +16,7 @@ import uk.ac.ebi.interpro.scan.jms.converter.Converter;
 import uk.ac.ebi.interpro.scan.jms.exception.InvalidInputException;
 import uk.ac.ebi.interpro.scan.jms.master.*;
 import uk.ac.ebi.interpro.scan.jms.monitoring.MasterControllerApplication;
+import uk.ac.ebi.interpro.scan.jms.stats.SystemInfo;
 import uk.ac.ebi.interpro.scan.util.Utilities;
 import uk.ac.ebi.interpro.scan.jms.worker.WorkerImpl;
 import uk.ac.ebi.interpro.scan.management.model.Job;
@@ -26,11 +27,13 @@ import uk.ac.ebi.interpro.scan.model.SignatureLibrary;
 import uk.ac.ebi.interpro.scan.model.SignatureLibraryRelease;
 
 import java.io.File;
+import java.io.FilePermission;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.security.AccessController;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -133,7 +136,20 @@ public class Run extends AbstractI5Runner {
                 }
             }
 
-            System.out.println(Utilities.getTimeNow() + " Welcome to InterProScan-5.21-60.0");
+
+            ArrayList<String> analysesHelpInformation = new ArrayList<>();
+
+            String i5Version = "5.25-64.0";
+            String i5BuildType = "64-Bit";
+            //32bitMessage:i5BuildType = "32-Bit";
+
+            //print version and exit
+            if (parsedCommandLine.hasOption(I5Option.VERSION.getLongOpt())) {
+                printVersion(i5Version, i5BuildType);
+                System.exit(0);
+            }
+
+            System.out.println(Utilities.getTimeNow() + " Welcome to InterProScan-" + i5Version);
             //32bitMessage:System.out.println(Utilities.getTimeNow() + " You are running the 32-bit version");
 
             //String config = System.getProperty("config");
@@ -166,7 +182,22 @@ public class Run extends AbstractI5Runner {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug(" Creating the  userInterproscan5Properties file : " + userInterproscan5Properties);
                     }
-                    userInterproscan5PropertiesFile.createNewFile();
+                    try {
+                        userInterproscan5PropertiesFile.createNewFile();
+                    }catch (IOException e){
+                        LOGGER.warn("Unable to access  " + userInterproscan5Properties);
+                        //check the permisions in the directory of user.home
+                        try {
+                            String actions = "read,write";
+                            AccessController.checkPermission(new FilePermission(System.getProperty("user.home"), actions));
+//                            System.out.println("You have read/write permition to use : " + System.getProperty("user.home"));
+                        } catch (SecurityException se) {
+                            LOGGER.warn("You don't have read/write permition to use : " + System.getProperty("user.home"));
+                        }
+
+                        LOGGER.warn(e);
+                    }
+
                 }
 
                 //Deal with user supplied config file from the command line
@@ -204,22 +235,30 @@ public class Run extends AbstractI5Runner {
 
                 if (isInvalid(mode, parsedCommandLine)) {
                     printHelp(COMMAND_LINE_OPTIONS_FOR_HELP);
-                    System.out.println("Available analyses:");    // LEAVE as System.out
+                    analysesHelpInformation.add("Available analyses:\n");    // LEAVE as System.out
                     for (Job job : jobs.getActiveAnalysisJobs().getJobList()) {
                         // Print out available jobs
                         SignatureLibraryRelease slr = job.getLibraryRelease();
-                        System.out.printf("    %25s (%s) : %s\n", slr.getLibrary().getName(), slr.getVersion(), job.getDescription()); // LEAVE as System.out
+                        analysesHelpInformation.add(String.format("    %25s (%s) : %s\n", slr.getLibrary().getName(), slr.getVersion(), job.getDescription())); // LEAVE as System.out
                     }
                     if (deactivatedJobs.size() > 0) {
-                        System.out.println("\nDeactivated analyses:");
+                        analysesHelpInformation.add("\nDeactivated analyses:\n");
                     }
                     for (Job deactivatedJob : deactivatedJobs.keySet()) {
                         JobStatusWrapper jobStatusWrapper = deactivatedJobs.get(deactivatedJob);
                         // Print out deactivated jobs
                         SignatureLibraryRelease slr = deactivatedJob.getLibraryRelease();
-                        System.out.printf("    %25s (%s) : %s\n", slr.getLibrary().getName(), slr.getVersion(), jobStatusWrapper.getWarning());
+                        analysesHelpInformation.add(String.format("    %25s (%s) : %s\n", slr.getLibrary().getName(), slr.getVersion(), jobStatusWrapper.getWarning()));
                     }
+                    printStringList(analysesHelpInformation);
                     System.exit(1);
+                }
+
+                //print help and exit
+                if (parsedCommandLine.hasOption(I5Option.HELP.getLongOpt())) {
+                    printHelp(COMMAND_LINE_OPTIONS_FOR_HELP);
+                    printStringList(analysesHelpInformation);
+                    System.exit(0);
                 }
 
                 try {
@@ -354,7 +393,7 @@ public class Run extends AbstractI5Runner {
             LOGGER.fatal("Exception thrown when parsing command line arguments.  Error message: " + exp.getMessage());
             printHelp(COMMAND_LINE_OPTIONS_FOR_HELP);
             System.exit(1);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         } finally {
@@ -529,6 +568,19 @@ public class Run extends AbstractI5Runner {
 //                    resourceMonitor.setRunId(runId);
                 }
             }
+            //deal with cpu cores specified by user
+            if (bbMaster instanceof StandaloneBlackBoxMaster ) {
+                //deal with cpu cores
+                if (parsedCommandLine.hasOption(I5Option.CPU.getLongOpt())) {
+                    int numberOfCPUCores = Integer.parseInt(parsedCommandLine.getOptionValue(I5Option.CPU.getLongOpt()));
+                    if (numberOfCPUCores == 0){
+                        LOGGER.warn("--cpu 0 is not allowed, updated to --cpu 1");
+                        numberOfCPUCores = 1;
+                    }
+                    ((StandaloneBlackBoxMaster) master).setMaxConcurrentInVmWorkerCount(numberOfCPUCores);
+                }
+            }
+
 
             if (parsedCommandLine.hasOption(I5Option.SEQUENCE_TYPE.getLongOpt())) {
                 bbMaster.setSequenceType(sequenceType);
@@ -543,7 +595,7 @@ public class Run extends AbstractI5Runner {
             }
 
             // Exclude sites from output?
-            final boolean excludeSites = parsedCommandLine.hasOption(I5Option.NOSITES.getLongOpt());
+            final boolean excludeSites = parsedCommandLine.hasOption(I5Option.DISABLE_RESIDUE_ANNOT.getLongOpt());
             bbMaster.setExcludeSites(excludeSites);
 
             // GO terms and/or pathways will also imply IPR lookup

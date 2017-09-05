@@ -14,7 +14,7 @@
     <import resource="jobHAMAP-context.xml"/>
     <import resource="jobMobiDBLite-context.xml"/>
     <import resource="jobPanther-context.xml"/>
-    <import resource="jobPIRSF-3.01-context.xml"/>
+    <import resource="jobPIRSF-context.xml"/>
 
     <import resource="jobPfam-context.xml"/>
     <import resource="jobPhobius-context.xml"/>
@@ -57,6 +57,7 @@
                 <ref bean="jobPanther"/>
                 <ref bean="jobPfam"/>
                 <ref bean="jobPhobius"/>
+                <ref bean="jobPIRSF" />
                 <ref bean="jobPRINTS-42.0"/>
                 <ref bean="jobProDom-2006.1"/>
                 <ref bean="jobPrositeProfiles"/>
@@ -67,7 +68,7 @@
                 <ref bean="jobSignalP_GRAM_NEGATIVE"/>
                 <ref bean="jobSMART"/>
                 <ref bean="jobTIGRFAM"/>
-                <ref bean="jobPIRSF-3.01" />
+
                 <ref bean="jobSuperFamily-1.75"/>
                 <ref bean="jobTMHMM"/>
             </list>
@@ -244,14 +245,16 @@
                 <property name="sequenceLoader">
                     <bean class="uk.ac.ebi.interpro.scan.business.sequence.ProteinLoader">
                         <property name="proteinPrecalcLookupBatchSize" value="50"/>
-                        <!-- MUST NOT EXCEED 1000 -->
-                        <property name="proteinInsertBatchSize" value="50"/>
+                        <!-- MUST NOT EXCEED 1000 ?? maybe need to revise this after more testing  : gift -->
+                        <property name="proteinInsertBatchSize" value="${precalculated.match.protein.insert.batch.size}"/>
+                        <property name="proteinInsertBatchSizeNoLookup" value="${precalculated.match.protein.insert.batch.size.nolookup}"/>
                         <property name="proteinDAO" ref="proteinDAO"/>
                         <property name="proteinLookup" ref="precalculatedLookup"/>
                         <property name="getOrfOutput" value="true"/>
                         <property name="nucleotideSequenceDAO" ref="nucleotideSequenceDAO"/>
                         <property name="openReadingFrameDAO" ref="openReadingFrameDAO"/>
                         <property name="descriptionLineParser" ref="getOrfDescriptionLineParser"/>
+
                     </bean>
                 </property>
             </bean>
@@ -321,7 +324,7 @@
         <property name="proteinPrecalcLookupBatchSize" value="${precalculated.match.protein.lookup.batch.size}"/>
 
         <!-- MUST NOT EXCEED 1000 -->
-        <!-- maybe the comment above only applies to when using the lookup match service -gn-->
+        <!-- maybe the comment above only applies to when using the lookup match service : gn-->
         <property name="proteinInsertBatchSize" value="${precalculated.match.protein.insert.batch.size}"/>
         <property name="proteinInsertBatchSizeNoLookup" value="${precalculated.match.protein.insert.batch.size.nolookup}"/>
         <property name="proteinDAO" ref="proteinDAO"/>
