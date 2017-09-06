@@ -119,24 +119,24 @@ void output_dom_sites_by_target(struct hmmer_dom *dom_hits, int n_dom_hits, stru
             printf("Sequence: %s\n", this_target);
             printf("Domains:\n");
             while (h < n_dom_hits && ! strcmp(dom_hits[h].target_ac, this_target))
-                output_dom_hit(dom_hits[h++], 1, 0);
+                output_dom_hit(dom_hits[h++], 0);
         } else if (cmp > 0) { // next target in alph order is a site hit
             free(this_target);
             this_target = strdup(site_hits[s].target_ac);
             printf("Sequence: %s\n", this_target);
             printf("Sites:\n");
             while (s < n_site_hits && ! strcmp(site_hits[s].target_ac, this_target))
-                output_site_hit(site_hits[s++], 1, 0);
+                output_site_hit(site_hits[s++], 0);
         } else { // next target hits to both domains and sites
             free(this_target);
             this_target = strdup(site_hits[s].target_ac);
             printf("Sequence: %s\n", this_target);
             printf("Domains:\n");
             while (h < n_dom_hits && ! strcmp(dom_hits[h].target_ac, this_target))
-                output_dom_hit(dom_hits[h++], 1, 0);
+                output_dom_hit(dom_hits[h++], 0);
             printf("Sites:\n");
             while (s < n_site_hits && ! strcmp(site_hits[s].target_ac, this_target))
-                output_site_hit(site_hits[s++], 1, 0);
+                output_site_hit(site_hits[s++], 0);
         }
         printf("// \n");
     }
@@ -149,7 +149,7 @@ void output_dom_sites_by_target(struct hmmer_dom *dom_hits, int n_dom_hits, stru
         printf("Sequence: %s\n", this_target);
         printf("Domains:\n");
         while (h < n_dom_hits && ! strcmp(dom_hits[h].target_ac, this_target))
-            output_dom_hit(dom_hits[h++], 1, 0);
+            output_dom_hit(dom_hits[h++], 0);
     }
 
     // ... or site hits
@@ -160,7 +160,7 @@ void output_dom_sites_by_target(struct hmmer_dom *dom_hits, int n_dom_hits, stru
         printf("Sequence: %s\n", this_target);
         printf("Sites:\n");
         while (s < n_site_hits && ! strcmp(site_hits[s].target_ac, this_target))
-            output_site_hit(site_hits[s++], 1, 0);
+            output_site_hit(site_hits[s++], 0);
     }
 
     free(this_target);
@@ -185,10 +185,10 @@ void output_dom_sites_as_tab(struct hmmer_dom *dom_hits, int n_dom_hits, struct 
         h++;
 
     while (h < n_dom_hits) {
-        output_dom_hit(dom_hits[h++], 1, 1);
+        output_dom_hit(dom_hits[h++], 1);
     }
     while (s < n_site_hits) {
-        output_site_hit(site_hits[s++], 1, 1);
+        output_site_hit(site_hits[s++], 1);
     }
 
     free(this_target);
@@ -276,22 +276,22 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
         }
         for (s = 0; s < n_seq; s++) {
             matches[s].has_matched = 0;
-            if ((matches[s].residue_matches = (char *)malloc(family.n_sites[f])) == NULL) {
+            if ((matches[s].residue_matches = (char *)malloc(family.n_sites)) == NULL) {
                 fprintf(stderr, "Error - out of memory?\n");
                 exit (1);
             }
-            matches[s].residue_match_coords = (int *)malloc(sizeof(int) * family.n_sites[f]);
-            //matches[s].residue_matches[family.n_sites[f]] = '\0';
+            matches[s].residue_match_coords = (int *)malloc(sizeof(int) * family.n_sites);
+            //matches[s].residue_matches[family.n_sites] = '\0';
         }
         apos = 0;
         rpos = 0; // index of residues of interest within the pattern
-        for (fi = 0; fi < family.n_sites[f]; fi++, next_fpos = 0) {
-            fpos = family.site[f][fi];
+        for (fi = 0; fi < family.n_sites; fi++, next_fpos = 0) {
+            fpos = family.site_pos[fi];
             for (; apos < alen && ! next_fpos; apos++) {
                 if (rf_array[apos] == fpos) {
                     for (s = 0; s < n_seq; s++) {
                         seq_base = msa->aseq[s][apos];
-                        if (seq_base == family.residue[f][fi]) {
+                        if (seq_base == family.site_residue[f][fi]) {
                             // store matched residue/coordinate
                             matches[s].residue_matches[rpos] = seq_base;
                             matches[s].residue_match_coords[rpos] = pos_map[s][apos];
@@ -306,18 +306,18 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
         for (s = 0; s < n_seq; s++) {
             tmp = (char *)malloc(1000);
             tmp2 = tmp;
-            if (matches[s].has_matched == family.n_sites[f]) {
+            if (matches[s].has_matched == family.n_sites) {
                 seqs_matched[s]++;
                 *site_hits = realloc(*site_hits, (1 + *n_site_hits) * sizeof(struct site_match));
                 (*site_hits)[*n_site_hits].target_ac = strndup(msa->sqname[s], (rindex(msa->sqname[s], '/') - msa->sqname[s]));
                 (*site_hits)[*n_site_hits].model_ac = strdup(family.name);
-                (*site_hits)[*n_site_hits].match_desc = strdup(family.feature_name[f]);
-                for (rpos = 0; rpos < family.n_sites[f]; rpos++) {
+                for (rpos = 0; rpos < family.n_sites; rpos++) {
                     sprintf(tmp2, "%c%d,", matches[s].residue_matches[rpos], matches[s].residue_match_coords[rpos]);
                     tmp2 = tmp + strlen(tmp);
                 }
                 tmp[strlen(tmp) - 1] = '\0';
                 (*site_hits)[*n_site_hits].match_str = strdup(tmp);
+                build_site_match_strings(family, matches[s].residue_match_coords, matches[s].residue_matches, &(*site_hits)[*n_site_hits].n_match_lines, &(*site_hits)[*n_site_hits].match_lines);
                 ++*n_site_hits;
             }
             free(tmp);
@@ -343,6 +343,48 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
 }
 
 
+void build_site_match_strings(struct family family, int *coords, char *residues, int *n_lines, char ***lines)
+{
+    int s;
+    int found;
+    char *desc;
+    char *tmp;
+    desc = NULL;
+    tmp = (char *)malloc(1000);
+    tmp[0] = '\0';
+    *lines = NULL;
+    *n_lines = 0;
+
+    do {
+        found = 0;
+        for (s = 0; s < family.n_sites; s++) {
+            if (coords[s] > 0)
+                found++;
+            else
+                continue;
+            if (! desc || strcmp(desc, family.site_desc[s])) {
+                *lines = (char **)realloc(*lines, (1 + *n_lines) * sizeof(char *));
+                if (strlen(tmp)) {
+                    sprintf(tmp + strlen(tmp) - 1, " %s", desc);
+                    (*lines)[*n_lines - 1] = strdup(tmp);
+                    tmp[0] = '\0';
+                }
+                if (desc)
+                    free(desc);
+                desc = strdup(family.site_desc[s]);
+                ++*n_lines;
+            }
+            sprintf(tmp + strlen(tmp), "%c%d,", residues[s], coords[s]);
+            coords[s] = 0;
+        }
+    } while (found > 0);
+    sprintf(tmp + strlen(tmp) - 1, " %s", desc);
+    (*lines)[*n_lines - 1] = strdup(tmp);
+    free(tmp);
+    free(desc);
+}
+
+
 // Parse aligment rf line
 void rf_to_array(ESL_MSA *msa, int *rf_array, int alen)
 {
@@ -363,7 +405,6 @@ void get_options_post(int argc, char **argv, int *only_matches, char **hmmer_out
     static struct option long_options[] =
     {
         {"help",         no_argument,       0,  'h' },
-     // {"onlymatches",  no_argument,       0,  'm' }, //
         {"hmmerpath",    required_argument, 0,  'p' }, // path to hmm* binaries (overrides $HMMER_PATH)
         {"format",       required_argument, 0,  'f' }, // Not yet implemented - output text format
         {"dom",          required_argument, 0,  'd' }, // HMMER dom table (prefixed with $SFLD_OUTPUT if set)
@@ -564,7 +605,6 @@ void show_help(char *progname)
 {
    printf("Post-process results of HMMER search on SFLD HMMs\n");
    printf("Usage %s: options:\n", progname);
-// printf("\t--onlymatches | -m         only print the sequences that match the HMM and pass the SFLD residue post-processing (otherwise print all)\n");
    printf("\t--nosearch    | -S         don't run search if output files exist\n");
    printf("\t--hmmerpath   | -p PATH    path to hmm* binaries (overrides $HMMER_PATH)\n");
    printf("\t--alignments  | -a         HMMER alignment file\n");
@@ -600,31 +640,41 @@ void read_site_data(char *fn, int *n_fam, struct family **families)
         if (! strncmp(line, "ACC", 3)) {
             *families = (struct family *)realloc(*families, (nf + 1) * sizeof(struct family));
             (*families)[nf].name = (char *)malloc(SFLD_NAME_LEN + 3);
-            sscanf(line + 4, "%s %d", (*families)[nf].name, &(*families)[nf].n_features);
-            (*families)[nf].n_sites = (int *)malloc((*families)[nf].n_features * sizeof(int));
-            (*families)[nf].feature_name = (char **)malloc((*families)[nf].n_features * sizeof(char *));
-            (*families)[nf].site = (int **)malloc((*families)[nf].n_features * sizeof(int *));
-            (*families)[nf].residue = (char **)malloc((*families)[nf].n_features * sizeof(int *));
+            sscanf(line + 4, "%s %d %d", (*families)[nf].name, &(*families)[nf].n_sites, &(*families)[nf].n_features);
+            (*families)[nf].site_pos = (int *)malloc((*families)[nf].n_sites * sizeof(int));
+            (*families)[nf].site_desc = (char **)malloc((*families)[nf].n_sites * sizeof(char *));
+            (*families)[nf].site_residue = (char **)malloc((*families)[nf].n_features * sizeof(char *));
+            for (s = 0; s < (*families)[nf].n_sites; s++) {
+                if (getline(&line, &n, fp) == -1) {
+                    fprintf(stderr, "error: %s", line);
+                    exit(1);
+                }
+                if (strncmp(line, "SITE", 4)) {
+                    fprintf(stderr, "error: %s", line);
+                    exit(1);
+                }
+                if (line[strlen(line) - 1] == '\n')
+                    line[strlen(line) - 1] = '\0';
+                sscanf(line + 4, "%d %n", &(*families)[nf].site_pos[s], &nc);
+                (*families)[nf].site_pos[s]--;
+                (*families)[nf].site_desc[s] = strdup(line + 4 + nc);
+            }
             for (f = 0; f < (*families)[nf].n_features; f++) {
                 if (getline(&line, &n, fp) == -1) {
-                    fprintf(stderr, "line\n");
+                    fprintf(stderr, "error: %s", line);
                     exit(1);
                 }
-                if (strncmp(line, "FEAT", 4)) {
-                    fprintf(stderr, "feat\n");
+                if (strncmp(line, "FEATURE", 7)) {
+                    fprintf(stderr, "error: %s", line);
                     exit(1);
                 }
-                p = line + 5;
-		l = index(p, ' ');
-                (*families)[nf].feature_name[f] = strndup(p, l - p);
-                p = l + 1;
-                sscanf(p, "%d %n", &(*families)[nf].n_sites[f], &nc);
-                (*families)[nf].site[f] = (int *)malloc((*families)[nf].n_sites[f] * sizeof(int));
-                (*families)[nf].residue[f] = (char *)malloc((*families)[nf].n_sites[f] * sizeof(int));
-                p += nc;
-		for (s = 0; s < (*families)[nf].n_sites[f]; s++) {
-                    sscanf(p, "%c %d %n", &(*families)[nf].residue[f][s], &(*families)[nf].site[f][s], &nc);
-                    p += nc;
+                if (strlen(line) != 9 + (*families)[nf].n_sites) {
+                    fprintf(stderr, "error: %s", line);
+                    exit(1);
+                }
+                (*families)[nf].site_residue[f] = (char *)malloc((*families)[nf].n_sites);
+		for (s = 0; s < (*families)[nf].n_sites; s++) {
+                    (*families)[nf].site_residue[f][s] = line[8 + s];
                 }
             }
             nf++;
@@ -636,22 +686,26 @@ void read_site_data(char *fn, int *n_fam, struct family **families)
 }
 
 
-void output_site_hit(struct site_match hit, int w_model, int w_target)
+void output_site_hit(struct site_match hit, int w_target)
 {
-    if (w_model)
-        printf("%s\t", hit.model_ac);
+    int h;
+/*
+    printf("%s\t", hit.model_ac);
     if (w_target)
         printf("%s\t", hit.target_ac);
-    printf("%s\t%s\n", hit.match_str, hit.match_desc);
+    printf("%s\n", hit.match_str);
+*/
+    for (h = 0; h < hit.n_match_lines; h++) {
+        printf("%s %s\n", hit.model_ac, hit.match_lines[h]);
+    }
 }
 
 
-void output_dom_hit(struct hmmer_dom hit, int w_model, int w_target)
+void output_dom_hit(struct hmmer_dom hit, int w_target)
 {
     //model_ac, seq_evalue, seq_score, seq_bias, hmm_start, hmm_end, dom_score, ali_start, ali_end, env_start, env_end, dom_cevalue, dom_ievalue, accuracy, dom_bias
 
-    if (w_model)
-        printf("%s\t", hit.model_ac);
+    printf("%s\t", hit.model_ac);
     printf("%.3e\t%.3e\t%.3f\t", hit.seq_evalue, hit.seq_score, hit.seq_bias);
     printf("%d\t%d\t%.3f\t", hit.hmm_start, hit.hmm_end, hit.dom_score);
     printf("%d\t%d\t%d\t%d\t", hit.ali_start, hit.ali_end, hit.env_start, hit.env_end);
@@ -750,12 +804,15 @@ void free_no_hits(int n, struct no_hit *nh)
 
 void free_site_hits(int n, struct site_match *hits)
 {
-    int i;
+    int i, j;
     for (i = 0; i < n; i++) {
         free(hits[i].target_ac);
         free(hits[i].model_ac);
         free(hits[i].match_str);
-        free(hits[i].match_desc);
+        for (j = 0; j < hits[i].n_match_lines; j++) {
+            free(hits[i].match_lines[j]);
+        }
+        free(hits[i].match_lines);
     }
     free(hits);
 }
@@ -768,14 +825,14 @@ void clear_family_data(int n, struct family *fams)
     for (i = 0; i < n; i++) {
         free(fams[i].name);
         for (j = 0; j < fams[i].n_features; j++) {
-            free(fams[i].site[j]);
-            free(fams[i].residue[j]);
-            free(fams[i].feature_name[j]);
+            free(fams[i].site_residue[j]);
         }
-        free(fams[i].site);
-        free(fams[i].n_sites);
-        free(fams[i].feature_name);
-        free(fams[i].residue);
+        for (j = 0; j < fams[i].n_sites; j++) {
+            free(fams[i].site_desc[j]);
+        }
+        free(fams[i].site_desc);
+        free(fams[i].site_pos);
+        free(fams[i].site_residue);
     }
     free(fams);
 }
