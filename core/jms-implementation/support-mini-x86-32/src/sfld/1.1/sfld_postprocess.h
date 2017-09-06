@@ -16,11 +16,11 @@
 struct family // one per SFLD accession
 {
     char *name; // feature name
-    char **feature_name;
     int n_features; // from the GC line
-    int *n_sites; // from the GC line
-    int **site; // from the GC line
-    char **residue;
+    int n_sites; // from the GC line
+    int *site_pos; // from the GC line
+    char **site_desc;
+    char **site_residue;
 };
 
 struct feature // one per SFLD feature
@@ -40,10 +40,14 @@ struct seq_matches // one per feature per sequence
 
 struct site_match
 {
+    int family_idx;
+    int *match_coords;
+    char *matches;
     char *target_ac;
     char *model_ac;
     char *match_str;
-    char *match_desc;
+    int n_match_lines;
+    char **match_lines;
 };
 
 struct no_hit // store mismatches
@@ -96,6 +100,7 @@ void output_site_hit(struct site_match hit, int, int);
 void free_site_hits(int n, struct site_match *hits);
 void free_no_hits(int n, struct no_hit *hits);
 void clear_family_data(int n, struct family *fams);
+void build_site_match_strings(struct family family, int *coords, char *residues, int *n_lines, char ***lines);
 
 void show_help(char *);
 
