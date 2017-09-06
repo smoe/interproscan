@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     if (format != NULL && ! strcmp(format, "text")) 
         output_dom_sites_as_tab(dom_hits, n_dom_hits, site_hits, n_site_hits);
     else
-        output_dom_sites_by_target(dom_hits, n_dom_hits, site_hits, n_site_hits); // i5 format default
+        output_dom_sites_by_query(dom_hits, n_dom_hits, site_hits, n_site_hits); // i5 format default
 
     // free space - could tidy this more
     free(ali_present);
@@ -89,53 +89,53 @@ int main(int argc, char **argv)
 
 
 // Stitch together the domain and site results
-void output_dom_sites_by_target(struct hmmer_dom *dom_hits, int n_dom_hits, struct site_match *site_hits, int n_site_hits)
+void output_dom_sites_by_query(struct hmmer_dom *dom_hits, int n_dom_hits, struct site_match *site_hits, int n_site_hits)
 {
     int h = 0;
     int s = 0;
     int cmp;
-    char *this_target;
-    this_target = strdup("");
+    char *this_query;
+    this_query = strdup("");
 
-    // Sort both domains and sites by target/model so that the results can be interleaved
+    // Sort both domains and sites by query/model so that the results can be interleaved
     // A 2-D array for hits might well have been better
-    qsort(dom_hits, n_dom_hits, sizeof(struct hmmer_dom), cmp_dom_target_model);
+    qsort(dom_hits, n_dom_hits, sizeof(struct hmmer_dom), cmp_dom_query_model);
 
     // Skip the matches without accessions - these were the ones filtered out earlier
-    while (h < n_dom_hits && strlen(dom_hits[h].target_ac) == 0 && strlen(dom_hits[h].model_ac) == 0)
+    while (h < n_dom_hits && strlen(dom_hits[h].query_ac) == 0 && strlen(dom_hits[h].model_ac) == 0)
         h++;
 
     // Interleave the domain and site hits
-    // Work through the stack of (sorted by target) hits and work out whether to output
+    // Work through the stack of (sorted by query) hits and work out whether to output
     // domain hits/site hits/both
     //
     // This could be simplified (fewer lines) but at the moment it's hopefully readable
     while (h < n_dom_hits && s < n_site_hits) {
-        // Does the next target have hits to domain/sites/both?
-        cmp = strcmp(dom_hits[h].target_ac, site_hits[s].target_ac);
-        if (cmp < 0) { // next target in alph order is a domain hit
-            free(this_target);
-            this_target = strdup(dom_hits[h].target_ac);
-            printf("Sequence: %s\n", this_target);
+        // Does the next query have hits to domain/sites/both?
+        cmp = strcmp(dom_hits[h].query_ac, site_hits[s].query_ac);
+        if (cmp < 0) { // next query in alph order is a domain hit
+            free(this_query);
+            this_query = strdup(dom_hits[h].query_ac);
+            printf("Sequence: %s\n", this_query);
             printf("Domains:\n");
-            while (h < n_dom_hits && ! strcmp(dom_hits[h].target_ac, this_target))
+            while (h < n_dom_hits && ! strcmp(dom_hits[h].query_ac, this_query))
                 output_dom_hit(dom_hits[h++], 0);
-        } else if (cmp > 0) { // next target in alph order is a site hit
-            free(this_target);
-            this_target = strdup(site_hits[s].target_ac);
-            printf("Sequence: %s\n", this_target);
+        } else if (cmp > 0) { // next query in alph order is a site hit
+            free(this_query);
+            this_query = strdup(site_hits[s].query_ac);
+            printf("Sequence: %s\n", this_query);
             printf("Sites:\n");
-            while (s < n_site_hits && ! strcmp(site_hits[s].target_ac, this_target))
+            while (s < n_site_hits && ! strcmp(site_hits[s].query_ac, this_query))
                 output_site_hit(site_hits[s++], 0);
-        } else { // next target hits to both domains and sites
-            free(this_target);
-            this_target = strdup(site_hits[s].target_ac);
-            printf("Sequence: %s\n", this_target);
+        } else { // next query hits to both domains and sites
+            free(this_query);
+            this_query = strdup(site_hits[s].query_ac);
+            printf("Sequence: %s\n", this_query);
             printf("Domains:\n");
-            while (h < n_dom_hits && ! strcmp(dom_hits[h].target_ac, this_target))
+            while (h < n_dom_hits && ! strcmp(dom_hits[h].query_ac, this_query))
                 output_dom_hit(dom_hits[h++], 0);
             printf("Sites:\n");
-            while (s < n_site_hits && ! strcmp(site_hits[s].target_ac, this_target))
+            while (s < n_site_hits && ! strcmp(site_hits[s].query_ac, this_query))
                 output_site_hit(site_hits[s++], 0);
         }
         printf("// \n");
@@ -143,27 +143,27 @@ void output_dom_sites_by_target(struct hmmer_dom *dom_hits, int n_dom_hits, stru
 
     // Clear up any remaining domain hits...
     while (h < n_dom_hits) {
-        free(this_target);
-        this_target = strdup(dom_hits[h].target_ac);
+        free(this_query);
+        this_query = strdup(dom_hits[h].query_ac);
         printf("// \n");
-        printf("Sequence: %s\n", this_target);
+        printf("Sequence: %s\n", this_query);
         printf("Domains:\n");
-        while (h < n_dom_hits && ! strcmp(dom_hits[h].target_ac, this_target))
+        while (h < n_dom_hits && ! strcmp(dom_hits[h].query_ac, this_query))
             output_dom_hit(dom_hits[h++], 0);
     }
 
     // ... or site hits
     while (s < n_site_hits) {
-        free(this_target);
-        this_target = strdup(site_hits[s].target_ac);
+        free(this_query);
+        this_query = strdup(site_hits[s].query_ac);
         printf("// \n");
-        printf("Sequence: %s\n", this_target);
+        printf("Sequence: %s\n", this_query);
         printf("Sites:\n");
-        while (s < n_site_hits && ! strcmp(site_hits[s].target_ac, this_target))
+        while (s < n_site_hits && ! strcmp(site_hits[s].query_ac, this_query))
             output_site_hit(site_hits[s++], 0);
     }
 
-    free(this_target);
+    free(this_query);
 }
 
 
@@ -173,15 +173,15 @@ void output_dom_sites_as_tab(struct hmmer_dom *dom_hits, int n_dom_hits, struct 
     int h = 0;
     int s = 0;
     int cmp;
-    char *this_target;
-    this_target = strdup("");
+    char *this_query;
+    this_query = strdup("");
 
-    // Sort both domains and sites by target/model so that the results can be interleaved
+    // Sort both domains and sites by query/model so that the results can be interleaved
     // A 2-D array for hits might well have been better
-    qsort(dom_hits, n_dom_hits, sizeof(struct hmmer_dom), cmp_dom_target_model);
+    qsort(dom_hits, n_dom_hits, sizeof(struct hmmer_dom), cmp_dom_query_model);
 
     // Skip the matches without accessions - these were the ones filtered out earlier
-    while (h < n_dom_hits && strlen(dom_hits[h].target_ac) == 0 && strlen(dom_hits[h].model_ac) == 0)
+    while (h < n_dom_hits && strlen(dom_hits[h].query_ac) == 0 && strlen(dom_hits[h].model_ac) == 0)
         h++;
 
     while (h < n_dom_hits) {
@@ -191,7 +191,7 @@ void output_dom_sites_as_tab(struct hmmer_dom *dom_hits, int n_dom_hits, struct 
         output_site_hit(site_hits[s++], 1);
     }
 
-    free(this_target);
+    free(this_query);
 }
 
 
@@ -226,8 +226,8 @@ void identify_site_matches(char *aln_fn, struct family *families, int n_families
         esl_msa_Destroy(msa);
     }
 
-    qsort(*site_hits, *n_site_hits, sizeof(struct site_match), cmp_site_target_model);
-    qsort(*no_hits, *n_no_hits, sizeof(struct no_hit), cmp_nohit_target_model);
+    qsort(*site_hits, *n_site_hits, sizeof(struct site_match), cmp_site_query_model);
+    qsort(*no_hits, *n_no_hits, sizeof(struct no_hit), cmp_nohit_query_model);
     eslx_msafile_Close(msaf);
 }
 
@@ -243,8 +243,6 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
     int f, s, spos, fpos, rpos, apos, fi;
     int next_fpos = 0;
     char seq_base;
-    char *tmp;
-    char *tmp2;
     struct seq_matches *matches = NULL; // array for temp results - one per sequence - reused for each feature
 
     if ((rf_array = (int *)malloc(sizeof(int) * alen)) == NULL) {
@@ -281,7 +279,6 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
                 exit (1);
             }
             matches[s].residue_match_coords = (int *)malloc(sizeof(int) * family.n_sites);
-            //matches[s].residue_matches[family.n_sites] = '\0';
         }
         apos = 0;
         rpos = 0; // index of residues of interest within the pattern
@@ -304,23 +301,14 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
             }
         }
         for (s = 0; s < n_seq; s++) {
-            tmp = (char *)malloc(1000);
-            tmp2 = tmp;
             if (matches[s].has_matched == family.n_sites) {
                 seqs_matched[s]++;
                 *site_hits = realloc(*site_hits, (1 + *n_site_hits) * sizeof(struct site_match));
-                (*site_hits)[*n_site_hits].target_ac = strndup(msa->sqname[s], (rindex(msa->sqname[s], '/') - msa->sqname[s]));
+                (*site_hits)[*n_site_hits].query_ac = strndup(msa->sqname[s], (rindex(msa->sqname[s], '/') - msa->sqname[s]));
                 (*site_hits)[*n_site_hits].model_ac = strdup(family.name);
-                for (rpos = 0; rpos < family.n_sites; rpos++) {
-                    sprintf(tmp2, "%c%d,", matches[s].residue_matches[rpos], matches[s].residue_match_coords[rpos]);
-                    tmp2 = tmp + strlen(tmp);
-                }
-                tmp[strlen(tmp) - 1] = '\0';
-                (*site_hits)[*n_site_hits].match_str = strdup(tmp);
                 build_site_match_strings(family, matches[s].residue_match_coords, matches[s].residue_matches, &(*site_hits)[*n_site_hits].n_match_lines, &(*site_hits)[*n_site_hits].match_lines);
                 ++*n_site_hits;
             }
-            free(tmp);
             free(matches[s].residue_match_coords);
             free(matches[s].residue_matches);
         }
@@ -328,7 +316,7 @@ void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **si
     for (s = 0; s < n_seq; s++) {
         if (seqs_matched[s] == 0) {
             (*no_hits) = realloc(*no_hits, (1 + *n_no_hits) * sizeof(struct no_hit));
-            (*no_hits)[*n_no_hits].target_ac = strdup(msa->sqname[s]);
+            (*no_hits)[*n_no_hits].query_ac = strdup(msa->sqname[s]);
             (*no_hits)[*n_no_hits].model_ac = strdup(family.name);
             ++*n_no_hits;
         }
@@ -490,11 +478,11 @@ int parse_hmmer_dom(struct hmmer_dom *pd, char *line)
     sscanf(line, "%d %d %d %d %n", &pd->hmm_start, &pd->hmm_end, &pd->ali_start, &pd->ali_end, &p);
     line += p;
     sscanf(line, "%d %d %f", &pd->env_start, &pd->env_end, &pd->accuracy);
-    sprintf(pd->target_ac, "%s/%d-%d", ac, pd->ali_start, pd->ali_end);
+    sprintf(pd->query_ac, "%s/%d-%d", ac, pd->ali_start, pd->ali_end);
 }
 
 
-// Read domtblout file and store hits sorted by target and model accession
+// Read domtblout file and store hits sorted by query and model accession
 // Also store a list of family accessions with matches - will need to know which accessions are represented
 // in the alignment file
 void read_domtblout(char *fn, struct hmmer_dom **hits, int *n_hits)
@@ -525,7 +513,7 @@ void read_domtblout(char *fn, struct hmmer_dom **hits, int *n_hits)
     }
     *hits = (struct hmmer_dom *)realloc(*hits, *n_hits * sizeof(struct hmmer_dom));
 
-    qsort(*hits, *n_hits, sizeof(struct hmmer_dom), cmp_dom_target_model);
+    qsort(*hits, *n_hits, sizeof(struct hmmer_dom), cmp_dom_query_model);
 
     // Skip to end to make sure the file is complete
     while (getline(&line, &r, fp) > 0)
@@ -549,53 +537,53 @@ void path_concat(char *p, char *f, char **n) {
 }
 
 
-int cmp_nohit_target_model(const void *p1, const void *p2)
+int cmp_nohit_query_model(const void *p1, const void *p2)
 {
     struct no_hit *d1, *d2;
     int i;
     d1 = (struct no_hit *) p1;
     d2 = (struct no_hit *) p2;
-    i = strcmp(d1->target_ac, d2->target_ac);
+    i = strcmp(d1->query_ac, d2->query_ac);
     if (i) return i;
     return strcmp(d1->model_ac, d2->model_ac);
 }
 
 
-int cmp_dom_target_model(const void *p1, const void *p2)
+int cmp_dom_query_model(const void *p1, const void *p2)
 {
     struct hmmer_dom *d1, *d2;
     int i;
     d1 = (struct hmmer_dom *) p1;
     d2 = (struct hmmer_dom *) p2;
-    i = strcmp(d1->target_ac, d2->target_ac);
+    i = strcmp(d1->query_ac, d2->query_ac);
     if (i) return i;
     return strcmp(d1->model_ac, d2->model_ac);
 }
 
 
-int cmp_site_target_model(const void *p1, const void *p2)
+int cmp_site_query_model(const void *p1, const void *p2)
 {
     struct site_match *d1, *d2;
     int i;
     d1 = (struct site_match *) p1;
     d2 = (struct site_match *) p2;
-    i = strcmp(d1->target_ac, d2->target_ac);
+    i = strcmp(d1->query_ac, d2->query_ac);
     if (i) return i;
     return strcmp(d1->model_ac, d2->model_ac);
 }
 
 
-// utility comparison for the filter function - lists are sorted first by target then by model
-int cmp_match_pair(char *target_1, char *target_2, char *model_1, char *model_2)
+// utility comparison for the filter function - lists are sorted first by query then by model
+int cmp_match_pair(char *query_1, char *query_2, char *model_1, char *model_2)
 {
-    int c1 = strcmp(target_1, target_2);
+    int c1 = strcmp(query_1, query_2);
     int c2 = strcmp(model_1, model_2);
-    // compare target strings
+    // compare query strings
     if (c1 > 0)
         return 1;
     else if (c1 < 0)
         return -1;
-    // targets same - compare model strings
+    // queries same - compare model strings
     else
         return c2;
 }
@@ -686,32 +674,31 @@ void read_site_data(char *fn, int *n_fam, struct family **families)
 }
 
 
-void output_site_hit(struct site_match hit, int w_target)
+void output_site_hit(struct site_match hit, int one_line)
 {
     int h;
-/*
-    printf("%s\t", hit.model_ac);
-    if (w_target)
-        printf("%s\t", hit.target_ac);
-    printf("%s\n", hit.match_str);
-*/
-    for (h = 0; h < hit.n_match_lines; h++) {
-        printf("%s %s\n", hit.model_ac, hit.match_lines[h]);
-    }
+    if (one_line) {
+        printf("%s", hit.model_ac);
+        for (h = 0; h < hit.n_match_lines; h++) {
+            printf(" %s", hit.match_lines[h]);
+        }
+        printf("%s\n", hit.query_ac);
+    } else
+        for (h = 0; h < hit.n_match_lines; h++) {
+            printf("%s %s\n", hit.model_ac, hit.match_lines[h]);
+        }
 }
 
 
-void output_dom_hit(struct hmmer_dom hit, int w_target)
+void output_dom_hit(struct hmmer_dom hit, int w_query)
 {
-    //model_ac, seq_evalue, seq_score, seq_bias, hmm_start, hmm_end, dom_score, ali_start, ali_end, env_start, env_end, dom_cevalue, dom_ievalue, accuracy, dom_bias
-
     printf("%s\t", hit.model_ac);
     printf("%.3e\t%.3e\t%.3f\t", hit.seq_evalue, hit.seq_score, hit.seq_bias);
     printf("%d\t%d\t%.3f\t", hit.hmm_start, hit.hmm_end, hit.dom_score);
     printf("%d\t%d\t%d\t%d\t", hit.ali_start, hit.ali_end, hit.env_start, hit.env_end);
     printf("%.3e\t%.3e\t%.3f\t%.3f", hit.dom_cevalue, hit.dom_ievalue, hit.accuracy, hit.dom_bias);
-    if (w_target)
-        printf("\t%s", hit.target_ac);
+    if (w_query)
+        printf("\t%s", hit.query_ac);
     printf("\n");
 }
 
@@ -724,13 +711,13 @@ void filter_no_hits(struct hmmer_dom *dom_hits, int n_dom_hits, struct no_hit *n
     int n = 0;
     for (h = 0; h < n_dom_hits; h++) {
         // If the first hit in the blacklist is below the first in the domain list (cmp_match_pair() returns > 1) we won't ever match it with the domains: skip to the next one in the blacklist
-        while (n < n_no_hits && cmp_match_pair(dom_hits[h].target_ac, no_hits[n].target_ac, dom_hits[h].model_ac, no_hits[n].model_ac) > 0)
+        while (n < n_no_hits && cmp_match_pair(dom_hits[h].query_ac, no_hits[n].query_ac, dom_hits[h].model_ac, no_hits[n].model_ac) > 0)
             n++;
         if (n == n_no_hits)
             return;
         // match - set the accessions to ""
-        if (! strcmp(dom_hits[h].target_ac, no_hits[n].target_ac) && ! strcmp(dom_hits[h].model_ac, no_hits[n].model_ac)) {
-            dom_hits[h].target_ac[0] = '\0';
+        if (! strcmp(dom_hits[h].query_ac, no_hits[n].query_ac) && ! strcmp(dom_hits[h].model_ac, no_hits[n].model_ac)) {
+            dom_hits[h].query_ac[0] = '\0';
             dom_hits[h].model_ac[0] = '\0';
         }
     }
@@ -742,8 +729,8 @@ void strip_dom_se(struct hmmer_dom *dom_hits, int n_dom_hits)
     int h;
     char *p;
     for (h = 0; h < n_dom_hits; h++) {
-        if (strlen(dom_hits[h].target_ac) > 0 && strlen(dom_hits[h].target_ac) > 0) {
-            p = rindex(dom_hits[h].target_ac, '/');
+        if (strlen(dom_hits[h].query_ac) > 0 && strlen(dom_hits[h].query_ac) > 0) {
+            p = rindex(dom_hits[h].query_ac, '/');
             *p = '\0';
         }
     }
@@ -795,7 +782,7 @@ void free_no_hits(int n, struct no_hit *nh)
 {
     int i;
     for (i = 0; i < n; i++) {
-        free(nh[i].target_ac);
+        free(nh[i].query_ac);
         free(nh[i].model_ac);
     }
     free(nh);
@@ -806,9 +793,8 @@ void free_site_hits(int n, struct site_match *hits)
 {
     int i, j;
     for (i = 0; i < n; i++) {
-        free(hits[i].target_ac);
+        free(hits[i].query_ac);
         free(hits[i].model_ac);
-        free(hits[i].match_str);
         for (j = 0; j < hits[i].n_match_lines; j++) {
             free(hits[i].match_lines[j]);
         }

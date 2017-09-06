@@ -40,25 +40,22 @@ struct seq_matches // one per feature per sequence
 
 struct site_match
 {
-    int family_idx;
-    int *match_coords;
     char *matches;
-    char *target_ac;
+    char *query_ac;
     char *model_ac;
-    char *match_str;
     int n_match_lines;
     char **match_lines;
 };
 
 struct no_hit // store mismatches
 {
-    char *target_ac;
+    char *query_ac;
     char *model_ac;
 };
 
 struct hmmer_dom // used to read the lines from the dom table and store hits
 {
-    char target_ac[1001];
+    char query_ac[1001];
     char model_ac[1 + SFLD_NAME_LEN];
     float seq_evalue;
     float seq_score;
@@ -81,7 +78,7 @@ void read_family_data(ESL_MSA *, int *, struct feature **, int *);
 void rf_to_array(ESL_MSA *, int *, int);
 void identify_site_matches(char *aln_fn, struct family *families, int n_families, struct site_match **site_hits, int *n_site_hits, int *ali_present, struct no_hit **, int *);
 void get_site_matches(struct family family, ESL_MSA *msa, struct site_match **site_hits, int *n_site_hits, struct no_hit **, int *);
-void output_dom_sites_by_target(struct hmmer_dom *, int, struct site_match *, int);
+void output_dom_sites_by_query(struct hmmer_dom *, int, struct site_match *, int);
 void output_dom_sites_as_tab(struct hmmer_dom *, int, struct site_match *, int);
 void read_domtblout(char *, struct hmmer_dom **, int *);
 void family_ids_from_hmmer_out(char *, char ***, int *);
@@ -89,14 +86,14 @@ void get_options_post(int argc, char **argv, int *only_matches, char **hmmerout,
 void filter_no_hits(struct hmmer_dom *dom_hits, int n_dom_hits, struct no_hit *no_hits, int n_no_hits);
 void strip_dom_se(struct hmmer_dom *dom_hits, int n_dom_hits);
 int parse_hmmer_dom(struct hmmer_dom *, char *);
-int cmp_site_target_model(const void *, const void *);
-int cmp_dom_target_model(const void *, const void *);
-int cmp_nohit_target_model(const void *, const void *);
-int cmp_match_pair(char *target_1, char *model_1, char *target_2, char *model_2);
+int cmp_site_query_model(const void *, const void *);
+int cmp_dom_query_model(const void *, const void *);
+int cmp_nohit_query_model(const void *, const void *);
+int cmp_match_pair(char *query_1, char *model_1, char *query_2, char *model_2);
 void retrieve_families_with_ali(char *fn, int **ali_present, int *nfam);
 void read_site_data(char *fn, int *n_fam, struct family **families);
-void output_dom_hit(struct hmmer_dom hit, int, int);
-void output_site_hit(struct site_match hit, int, int);
+void output_dom_hit(struct hmmer_dom hit, int);
+void output_site_hit(struct site_match hit, int);
 void free_site_hits(int n, struct site_match *hits);
 void free_no_hits(int n, struct no_hit *hits);
 void clear_family_data(int n, struct family *fams);
