@@ -621,6 +621,19 @@ void read_site_data(char *fn, int *n_fam, struct family **families)
         exit(1);
     }
 
+    if (getline(&line, &n, fp) == -1 || strcmp(line, "## MSA feature annotation file\n")) {
+        fprintf(stderr, "Error reading residue annotation file, incorrect format:\n>>>%s", line);
+        exit(1);
+    }
+    if (getline(&line, &n, fp) == -1 || strncmp(line, "# Format version:", 17)) {
+        fprintf(stderr, "Error reading residue annotation file, incorrect format:\n>>>%s", line);
+        exit(1);
+    }
+    if (strcmp(line, "# Format version: 1.1\n")) {
+        fprintf(stderr, "Error reading residue annotation file: expecting version 1.1\n");
+        exit(1);
+    }
+
     while (getline(&line, &n, fp) != -1)
     {
         if (*line == '#')
