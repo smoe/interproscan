@@ -151,11 +151,12 @@ public class Gene3DParseAndPersistOutputStep extends Step {
 
                             //Utilities.verboseLog(cathResolverRecord.toString());
                             //DomTblDomainMatch domTblDomainMatch = domainTblLineMatchMap.get(cathResolverRecord.getRecordKey());
-                            //Utilities.verboseLog(domTblDomainMatch.toString());
+                            Utilities.verboseLog(domTblDomainMatch.toString());
                             String modelAccession = domTblDomainMatch.getQueryName();
-                            String gene3dModelAccession = (modelAccession.split("\\|")[2]).split("/")[0];
+//                            String gene3dModelAccession = (modelAccession.split("\\|")[2]).split("/")[0];
+                            String gene3dModelAccession = modelAccession.split("\\-")[0];
                             LOGGER.debug("gene3d modelAccession: " + gene3dModelAccession + " from - " + modelAccession);
-                            //Utilities.verboseLog("gene3d modelAccession: " + gene3dModelAccession + " from - " + modelAccession );
+                            Utilities.verboseLog("gene3d modelAccession: " + gene3dModelAccession + " from - " + modelAccession );
                             modelAccession = gene3dModelAccession;
                             String[] locations = cathResolverRecord.getResolvedStartsStopsPosition().split("-");
                             int locationStart = Integer.parseInt(locations[0]);
