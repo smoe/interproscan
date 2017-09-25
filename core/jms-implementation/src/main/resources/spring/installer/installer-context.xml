@@ -71,7 +71,6 @@
                     <property name="analysisJobId" value="jobPfam"/>
                 </bean>
 
-
                 <bean class="uk.ac.ebi.interpro.scan.io.prints.PvalParser">
                     <property name="signatureLibrary" value="PRINTS"/>
                     <property name="releaseVersionNumber" value="42.0"/>

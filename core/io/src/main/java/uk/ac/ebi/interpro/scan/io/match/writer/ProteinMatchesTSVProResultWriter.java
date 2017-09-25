@@ -3,6 +3,7 @@ package uk.ac.ebi.interpro.scan.io.match.writer;
 import uk.ac.ebi.interpro.scan.io.TSVWriter;
 import uk.ac.ebi.interpro.scan.io.match.panther.PantherMatchParser;
 import uk.ac.ebi.interpro.scan.model.*;
+import uk.ac.ebi.interpro.scan.util.Utilities;
 
 import java.io.IOException;
 import java.nio.DoubleBuffer;
@@ -53,6 +54,7 @@ public class ProteinMatchesTSVProResultWriter extends ProteinMatchesResultWriter
 
             for (Match match : matches) {
                 final Signature signature = match.getSignature();
+                Utilities.verboseLog("final signature: " + signature);
                 final String signatureAc = signature.getAccession();
                 final SignatureLibrary signatureLibrary = signature.getSignatureLibraryRelease().getLibrary();
                 final String analysis = signatureLibrary.getName();

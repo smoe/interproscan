@@ -16,8 +16,10 @@
 
 package uk.ac.ebi.interpro.scan.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -117,6 +119,10 @@ public class Signature implements Serializable {
     @JsonManagedReference
     private SignatureLibraryRelease signatureLibraryRelease;
 
+//    @Transient
+    @Column(nullable = true)
+    private String modelsString;
+
     // TODO: Decide whether to use Map or Set (see ChEBI team)
     // TODO: Use ConcurrentHashMap if need concurrent modification of signatures
     // TODO: Use Hashtable if want to disallow duplicate values
@@ -125,6 +131,7 @@ public class Signature implements Serializable {
     @MapKey(name = "accession")
     @BatchSize(size=4000)
     @JsonManagedReference
+    @JsonIgnore
     private Map<String, Model> models = new HashMap<String, Model>();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "signature")
@@ -199,6 +206,7 @@ public class Signature implements Serializable {
         private String abstractText;
         private String comment;
         private SignatureLibraryRelease signatureLibraryRelease;
+        private String modelsString;
         private Set<Model> models = new HashSet<Model>();
         private Set<SignatureXref> crossReferences = new HashSet<SignatureXref>();
         private Set<String> deprecatedAccessions = new HashSet<String>();
@@ -219,6 +227,7 @@ public class Signature implements Serializable {
             signature.setCreated(created);
             signature.setUpdated(updated);
             signature.setMd5(md5);
+            signature.setModelsString(modelsString);
             signature.setComment(comment);
             if (models != null) {
                 signature.setModels(models);
@@ -281,6 +290,11 @@ public class Signature implements Serializable {
 
         public Builder signatureLibraryRelease(SignatureLibraryRelease signatureLibraryRelease) {
             this.signatureLibraryRelease = signatureLibraryRelease;
+            return this;
+        }
+
+        public Builder modelsString(String modelsString) {
+            this.modelsString = modelsString;
             return this;
         }
 
@@ -479,10 +493,36 @@ public class Signature implements Serializable {
         deprecatedAccessions.remove(ac);
     }
 
-    @XmlJavaTypeAdapter(ModelAdapter.class)
+//    @XmlJavaTypeAdapter(ModelAdapter.class)
+    @XmlTransient
     public Map<String, Model> getModels() {
 //        return (models == null ? null : Collections.unmodifiableMap(models));
         return models;
+    }
+
+    // add the modelString variable for handling mode string list
+    @XmlElement (name = "models")
+    @JsonProperty("models")
+    public String getModelsString() {
+        return modelsString;
+    }
+
+    public void addModelString(String modelsString) {
+            if (this.modelsString == null){
+                setModelsString(modelsString);
+            }else {
+                for(String elem: this.modelsString.split(",")){
+                    if (modelsString.equals(elem)){
+                        System.out.println("model already in list: " + elem);
+                        return;
+                    }
+                }
+                this.modelsString = this.modelsString + "," + modelsString;
+            }
+    }
+
+    public void setModelsString(String modelsString) {
+        this.modelsString = modelsString;
     }
 
     // Private so can only be set by JAXB, Hibernate ...etc via reflection
@@ -549,7 +589,7 @@ public class Signature implements Serializable {
     @XmlAccessorOrder(XmlAccessOrder.ALPHABETICAL)
     private final static class ModelsType {
 
-        @XmlElement(name = "model")
+        @XmlElement(name = "old-model-td")
         private final Set<Model> models;
 
         private ModelsType() {
@@ -695,6 +735,7 @@ public class Signature implements Serializable {
 //                .append("description", getDescription())
 //                .append("abstract", getAbstract())
 //                .append("models", getModels())
+                .append("modelsString", getModelsString())
 //                .append("deprecatedAccessions", deprecatedAccessions)
                 .toString();
     }

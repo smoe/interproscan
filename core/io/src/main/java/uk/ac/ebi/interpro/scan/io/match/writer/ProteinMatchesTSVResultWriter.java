@@ -50,6 +50,7 @@ public class ProteinMatchesTSVResultWriter extends ProteinMatchesResultWriter {
             for (Match match : matches) {
 //                Utilities.verboseLog("print-match: " + match);
                 final Signature signature = match.getSignature();
+                Utilities.verboseLog("final signature: " + signature);
                 final String signatureAc = signature.getAccession();
                 final SignatureLibrary signatureLibrary = signature.getSignatureLibraryRelease().getLibrary();
                 final String analysis = signatureLibrary.getName();

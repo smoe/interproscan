@@ -45,7 +45,12 @@
     </properties>
 
     <dependencies>
-
+        <dependency>
+            <groupId>uk.ac.ebi.interpro.scan</groupId>
+            <artifactId>interproscan-util</artifactId>
+            <version>5.25-64.0</version>
+        </dependency>
+        
         <!-- JAXB API -->
         <dependency>
             <groupId>javax.xml.bind</groupId>

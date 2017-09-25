@@ -45,7 +45,10 @@ abstract class Hmmer2FilteredMatchDAO<T extends Hmmer2RawMatch>
                         public Signature getSignature(String modelAccession,
                                                       SignatureLibrary signatureLibrary,
                                                       String signatureLibraryRelease) {
-                            return modelAccessionToSignatureMap.get(modelAccession);
+                            Signature signature = modelAccessionToSignatureMap.get(modelAccession);
+                            //update signature models
+                            signature.addModelString(modelAccession);
+                            return signature;
                         }
                     }
                     );

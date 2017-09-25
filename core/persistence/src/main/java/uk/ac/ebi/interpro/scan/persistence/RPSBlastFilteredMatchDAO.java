@@ -119,6 +119,8 @@ abstract class RPSBlastFilteredMatchDAO<T extends RPSBlastRawMatch, R extends RP
                         )
                 );
 
+                //update signature models
+                signature.addModelString(rawMatch.getModelId());
                 RPSBlastMatch match = new RPSBlastMatch(signature, locations);
 
 

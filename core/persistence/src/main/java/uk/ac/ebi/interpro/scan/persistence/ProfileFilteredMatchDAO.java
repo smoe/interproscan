@@ -42,6 +42,8 @@ abstract class ProfileFilteredMatchDAO<T extends ProfileScanRawMatch>
             final Protein protein = proteinIdToProteinMap.get(rawProtein.getProteinIdentifier());
             for (T rawMatch : rawProtein.getMatches()) {
                 Signature signature = modelAccessionToSignatureMap.get(rawMatch.getModelId());
+                //update signature models
+                signature.addModelString(rawMatch.getModelId());
                 ProfileScanMatch match = buildMatch(signature, rawMatch);
                 protein.addMatch(match);
                 entityManager.persist(match);

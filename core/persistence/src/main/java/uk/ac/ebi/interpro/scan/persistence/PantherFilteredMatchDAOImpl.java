@@ -69,6 +69,8 @@ public class PantherFilteredMatchDAOImpl extends FilteredMatchDAOImpl<PantherRaw
                         if (match != null) {
                             entityManager.persist(match);  // Persist the previous one.
                         }
+                        //update signature models
+                        currentSignature.addModelString(rawMatch.getModelId());
                         match = new PantherMatch(
                                 currentSignature,
                                 locations,

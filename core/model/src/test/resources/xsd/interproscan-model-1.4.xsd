@@ -42,6 +42,7 @@
             <xs:element name="deprecated-ac" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element ref="tns:entry" minOccurs="0"/>
             <xs:element name="models" type="tns:modelsType" minOccurs="0"/>
+            <xs:element name="modelsString" type="xs:string" minOccurs="0"/>
             <xs:element ref="tns:signature-library-release" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="ac" type="xs:string" use="required"/>

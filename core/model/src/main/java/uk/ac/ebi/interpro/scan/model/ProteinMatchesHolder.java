@@ -4,6 +4,7 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import javax.swing.text.Utilities;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
@@ -32,6 +33,7 @@ public final class ProteinMatchesHolder implements IMatchesHolder, Serializable 
 
     public void addProtein(Protein protein) {
         proteins.add(protein);
+        System.out.println(protein);
     }
 
     @XmlElement(name = "protein")

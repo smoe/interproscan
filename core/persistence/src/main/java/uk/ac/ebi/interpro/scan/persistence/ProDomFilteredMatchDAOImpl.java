@@ -70,6 +70,8 @@ public class ProDomFilteredMatchDAOImpl extends FilteredMatchDAOImpl<ProDomRawMa
                         if (match != null) {
                             entityManager.persist(match); // Persist the previous one...
                         }
+                        //update signature models
+                        currentSignature.addModelString(rawMatch.getModelId());
                         match = new BlastProDomMatch(currentSignature, locations);
                         // Not the first...
                         protein.addMatch(match);

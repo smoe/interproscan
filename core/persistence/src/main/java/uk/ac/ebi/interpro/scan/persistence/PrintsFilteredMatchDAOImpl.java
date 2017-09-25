@@ -72,6 +72,8 @@ public class PrintsFilteredMatchDAOImpl extends FilteredMatchDAOImpl<PrintsRawMa
                         if (match != null) {
                             entityManager.persist(match); // Persist the previous one...
                         }
+                        //update signature models
+                        currentSignature.addModelString(rawMatch.getModelId());
                         match = new FingerPrintsMatch(currentSignature, lastRawMatch.getEvalue(), lastRawMatch.getGraphscan(), locations);
                         protein.addMatch(match);   // Sets the protein on the match.
                     }

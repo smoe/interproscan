@@ -7,9 +7,11 @@ import uk.ac.ebi.interpro.scan.model.HmmBounds;
 import uk.ac.ebi.interpro.scan.model.Hmmer3Match;
 import uk.ac.ebi.interpro.scan.model.Signature;
 import uk.ac.ebi.interpro.scan.model.SignatureLibrary;
+import uk.ac.ebi.interpro.scan.util.Utilities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+//import javax.swing.text.Utilities;
 import java.util.*;
 
 /**
@@ -154,6 +156,7 @@ public abstract class Hmmer3RawMatch extends HmmerRawMatch {
         // Find the location(s) for each match and create a Match instance
         for (String key : matchesByModel.keySet()) {
             Signature signature = rawMatchListener.getSignature(key, signatureLibrary, signatureLibraryRelease);
+            Utilities.verboseLog("signature: " + signature + " for key - " + key );
             if (signature != null) {
                 //TODO when gene3d model 2signaturemap is resolved remove this condition
                 matches.add(getMatch(signature, key, matchesByModel));

@@ -65,6 +65,8 @@ public class SuperFamilyHmmer3FilteredMatchDAOImpl extends FilteredMatchDAOImpl<
                     if (currentSignature == null) {
                         throw new IllegalStateException("Cannot find model " + rawMatch.getModelId() + " in the database.");
                     }
+                    //update signature models
+                    currentSignature.addModelString(rawMatch.getModelId());
                     match = new SuperFamilyHmmer3Match(
                             currentSignature,
                             rawMatch.getEvalue(),
