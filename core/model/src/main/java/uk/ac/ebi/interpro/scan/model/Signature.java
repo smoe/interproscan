@@ -497,7 +497,8 @@ public class Signature implements Serializable {
     @XmlTransient
     public Map<String, Model> getModels() {
 //        return (models == null ? null : Collections.unmodifiableMap(models));
-        return models;
+//        return null;
+        return models; // maybe we dont ever need to return anything, ok we do
     }
 
     // add the modelString variable for handling mode string list
@@ -513,7 +514,7 @@ public class Signature implements Serializable {
             }else {
                 for(String elem: this.modelsString.split(",")){
                     if (modelsString.equals(elem)){
-                        System.out.println("model already in list: " + elem);
+                        System.out.println("Model already in list: " + elem);
                         return;
                     }
                 }

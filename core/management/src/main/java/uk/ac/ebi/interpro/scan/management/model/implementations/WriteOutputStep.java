@@ -368,6 +368,7 @@ public class WriteOutputStep extends Step {
         if (isSlimOutput) {
             // Only include a protein in the output if it has at least one match
             for (Protein protein : proteins) {
+                LOGGER.warn("protein is : " + protein.toString());
                 Set<Match> matches = protein.getMatches();
                 if (matches != null && matches.size() > 0) {
                     matchesHolder.addProtein(protein);
