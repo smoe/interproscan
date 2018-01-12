@@ -4,6 +4,7 @@ import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.log4j.Logger;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.MessageCreator;
+import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import uk.ac.ebi.interpro.scan.jms.worker.WorkerState;
 import uk.ac.ebi.interpro.scan.management.model.StepInstance;
 import uk.ac.ebi.interpro.scan.util.Utilities;
@@ -92,6 +93,8 @@ public class StatsUtil {
     private long currentMasterlifeSpanRemaining;
 
     int requestQueueConsumerCount = 0;
+
+    private String consumerStatistics = "";
 
     private SystemInfo systemInfo;
 
@@ -569,6 +572,13 @@ public class StatsUtil {
 
     }
 
+    public  void setWorkerStats(DefaultMessageListenerContainer workerQueueJmsContainer){
+        StringBuilder workerQueueStats = new StringBuilder().append(
+                    " active consumer count: " + workerQueueJmsContainer.getActiveConsumerCount()
+                    + " max concurrent consumer count: " + workerQueueJmsContainer.getMaxConcurrentConsumers()
+                    + " scheduled consumer count: " + workerQueueJmsContainer.getScheduledConsumerCount());
+        consumerStatistics = workerQueueStats.toString();
+    }
     /**
      * set the unfinished jobs
      */
@@ -630,13 +640,16 @@ public class StatsUtil {
                 actualProgress = Math.floor(progress * 100);
                 System.out.println(Utilities.getTimeNow() + " " + String.format("%.0f%%", actualProgress) + " completed");
 
-
-                int connectionCount = 9999; //statsMessageListener.getConsumers();
-                String debugProgressString = " #:t" + masterTotalJobs + ":l" + unfinishedJobs + ":c" + connectionCount;
+                int connectionCount = statsMessageListener.getConsumers();
+                String debugProgressString = " #:t" + masterTotalJobs + ":l" + unfinishedJobs + ":c :- " + consumerStatistics;
 //                LOGGER.debug(statsMessageListener.getStats());
-                displayMemoryAndRunningJobs();
+                if(Utilities.verboseLogLevel > 20){
+                    displayMemoryAndRunningJobs();
+                }else {
+                    displayRunningJobs();
+                }
                 displayQueueStatistics();
-                System.out.println(Utilities.getTimeNow() + " Progress: " + debugProgressString);
+                Utilities.verboseLog("Progress: " + debugProgressString);
             }
         }
     }

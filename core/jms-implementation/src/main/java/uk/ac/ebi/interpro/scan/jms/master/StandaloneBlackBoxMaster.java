@@ -83,7 +83,7 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
             }
             */
         }
-
+        statsUtil.setWorkerStats(workerQueueJmsContainer);
 
 
         Utilities.verboseLog("New values - inVmWorkers min: " + workerQueueJmsContainer.getConcurrentConsumers()
@@ -209,6 +209,7 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
                 statsUtil.setTotalJobs(totalStepInstances);
                 statsUtil.setUnfinishedJobs(totalUnfinishedStepInstances);
 //                final boolean statsAvailable = statsUtil.pollStatsBrokerJobQueue();
+                statsUtil.setWorkerStats(workerQueueJmsContainer);
                 statsUtil.displayMasterProgress();
 
 
