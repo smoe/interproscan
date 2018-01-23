@@ -120,6 +120,8 @@
             <bean class="uk.ac.ebi.interpro.scan.io.match.panther.PantherMatchParser">
                 <!--TODO: Figure out how to handle signature library release-->
                 <constructor-arg ref="latestPantherSignatureLibraryRelease"/>
+                <property name="evalueCutoff" value="${panther.evalue.cutoff}"/>
+                <property name="domEvalueCutoff" value="${panther.domain.evalue.cutoff}"/>
             </bean>
         </property>
         <property name="rawMatchDAO" ref="pantherRawMatchDAO"/>
@@ -147,7 +149,7 @@
         <property name="postProcessor">
             <bean class="uk.ac.ebi.interpro.scan.business.postprocessing.panther.PantherPostProcessor">
                 <!--TODO: Figure out how to handle this cut-off evalue-->
-                <constructor-arg value="1e-11"/>
+                <constructor-arg value="${panther.evalue.cutoff}"/>
             </bean>
         </property>
         <property name="rawMatchDAO" ref="pantherRawMatchDAO"/>

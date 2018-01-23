@@ -67,7 +67,7 @@ public class PantherPostProcessor implements Serializable {
             if (rawProteinMatch.getEvalue() <= geteValueCutoff()) {
                 result.addMatch(rawProteinMatch);
             } else {
-                LOGGER.info("Discarding the following protein raw match because it is not hold on the evalue cutoff: " + rawProteinMatch.getModelId());
+                LOGGER.info("Discarding the following protein raw match because it does not hold on the evalue cutoff: " + rawProteinMatch.getModelId());
             }
         }
         return result;

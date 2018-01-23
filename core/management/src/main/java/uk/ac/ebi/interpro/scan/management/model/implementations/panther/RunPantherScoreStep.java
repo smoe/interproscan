@@ -103,7 +103,7 @@ public class RunPantherScoreStep extends RunBinaryStep {
             command.add(outputFilePathName);
         }
 
-        Utilities.verboseLog("binary cmd to run: " + command.toString());
+        Utilities.verboseLog("binary cmd to run: " + getCommandBuilder(command));
         return command;
 
     }

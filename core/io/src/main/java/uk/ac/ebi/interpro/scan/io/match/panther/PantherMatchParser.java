@@ -23,6 +23,8 @@ public final class PantherMatchParser
 
     private static final Logger LOGGER = Logger.getLogger(PantherMatchParser.class.getName());
 
+    Double evalueCutoff;
+    Double domEvalueCutoff;
 
     /**
      * Constructor is only for JUnit testing.
@@ -33,6 +35,14 @@ public final class PantherMatchParser
 
     public PantherMatchParser(String signatureLibraryRelease) {
         super(SignatureLibrary.PANTHER, signatureLibraryRelease);
+    }
+
+    public void setEvalueCutoff(Double evalueCutoff) {
+        this.evalueCutoff = evalueCutoff;
+    }
+
+    public void setDomEvalueCutoff(Double domEvalueCutoff) {
+        this.domEvalueCutoff = domEvalueCutoff;
     }
 
     @Override
@@ -48,8 +58,9 @@ public final class PantherMatchParser
                 LOGGER.fatal(line);
             }
         }
+
         final String[] splitLine = line.split("\\t");
-        if (splitLine.length == 6) {
+        if (splitLine.length >= 9) {
             //Protein Id
             final String sequenceIdentifier = splitLine[0].trim();
             //Parse Panther family ID
@@ -61,7 +72,7 @@ public final class PantherMatchParser
             //Hit score provided by Panther
             final String scoreString = splitLine[4].trim();
             //Hit start and end
-            final String locationStartEnd = splitLine[5].trim();
+            final String locationStartEnd = splitLine[6].trim();
             //Transform raw parsed values
             double score = 0.0d;
             double evalue = 0.0d;

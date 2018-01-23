@@ -72,9 +72,10 @@ def location_overlaps(location1, location2):
 
 def get_filtered_best_hits(best_hits):
     # hmm_hit = [hmm_id, description, float(eVal), float(score), location]
+    # hmm_hit = [hmm_id, description, float(eVal), float(score), hmm_location, ali_location, env_location, qlen]
     filtered_best_hits = []
     for el in best_hits:
-        base_el_location = el[4]
+        base_el_location = el[5]
         overlaps = False
         if ":SF" in el[0]:
             #do nothing for now, we dont expect subfamilies to overlap in theory
@@ -83,7 +84,7 @@ def get_filtered_best_hits(best_hits):
             for other_el in best_hits:
                 if el == other_el:
                     continue
-                if location_overlaps(base_el_location, other_el[4]):
+                if location_overlaps(base_el_location, other_el[5]):
                     #deal with case where overlaps are present
                     overlaps = True
         if overlaps:
@@ -118,7 +119,7 @@ def get_best_hits(matches, evalue_cutoff):
                 best_hits.append(el)
     return best_hits
 
-def parse_domtblout(domtblout, panther_families, run_mode):
+def parse_domtblout(domtblout, panther_families, run_mode,evalue_cutoff, domEvalue_cutoff):
     all_scores = {}
     with open(domtblout, 'r') as infile:
         for line in infile:
@@ -129,10 +130,15 @@ def parse_domtblout(domtblout, panther_families, run_mode):
                     seqid, acc1, tlen, hmma, acc2, qlen, eVal, score, bias, num, num_t, cEval, iEval, dscore, dbias, hmm_f, hmm_t, ali_f, ali_t, env_f, env_t, accuracy, desc = line.split()
                 else:
                     print_error ("error: run_mode is invalid: " + run_mode)
+                #no need to consider hits with high evalue
+                if float(eVal) > evalue_cutoff:
+                    continue
                 hmm_id = get_query_name(hmma)
                 description = panther_families[hmm_id]
-                location = str(ali_f) + '-' + str(ali_t)
-                hmm_hit = [hmm_id, description, float(eVal), float(score), location]
+                hmm_location = str(hmm_f) + '-' + str(hmm_t)
+                ali_location = str(ali_f) + '-' + str(ali_t)
+                env_location = str(env_f) + '-' + str(env_t)
+                hmm_hit = [hmm_id, description, float(eVal), float(score), hmm_location, ali_location, env_location, qlen]
                 matches = append_to_match_list(all_scores, seqid, hmm_hit)
                 all_scores[seqid] = matches
     return all_scores
@@ -161,7 +167,7 @@ def usage():
 
 if __name__ == "__main__":
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hd:n:e:m:o:", ["help", "domtbl", "runmode", "evalue-cutoff","output"])
+        opts, args = getopt.getopt(sys.argv[1:], "h:d:n:e:p:m:o:", ["help", "domtbl", "runmode", "evalue-cutoff","domEvalue-cutoff","output"])
     except getopt.GetoptError as err:
         print(err)  # should print something like "option -a not recognized"
         usage()
@@ -179,6 +185,8 @@ if __name__ == "__main__":
             names_tab_file = arg_value
         elif option in ("-e", "--evalue-cutoff"):
             evalue_cutoff = float(arg_value)
+        elif option in ("-p", "--domEvalue-cutoff"):
+            domEvalue_cutoff = float(arg_value)
         elif option in ("-o", "--output"):
             output_file = arg_value
         else:
@@ -191,13 +199,15 @@ if __name__ == "__main__":
             sys.exit(3)
         if not evalue_cutoff:
             evalue_cutoff = float(1e-11)
+        if not domEvalue_cutoff:
+            domEvalue_cutoff = float(1e-8)
     except NameError:
         print ("provide the required parameters")
         usage()
         sys.exit(3)
 
     panther_families = get_panther_families(names_tab_file)
-    all_scores = parse_domtblout(domtblout, panther_families, run_mode)
+    all_scores = parse_domtblout(domtblout, panther_families, run_mode, evalue_cutoff, domEvalue_cutoff)
     with open(output_file, 'a') as outf:
         for seq_key in all_scores:
             matches = all_scores[seq_key]
