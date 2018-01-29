@@ -44,7 +44,7 @@ import java.util.Set;
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @XmlType(name = "LocationFragmentType", propOrder = {"start", "end"})
 @JsonIgnoreProperties({"id"})
-public abstract class LocationFragment implements Serializable, Cloneable {
+public abstract class LocationFragment implements Serializable, Cloneable,Comparable<LocationFragment> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "LOCN_FRAG_IDGEN")
@@ -403,6 +403,30 @@ public abstract class LocationFragment implements Serializable, Cloneable {
         public Set<TMHMMMatch.TMHMMLocation.TMHMMLocationFragment> getTMHMMLocationFragments() {
             return (tmhmmLocationFragments == null ? Collections.<TMHMMMatch.TMHMMLocation.TMHMMLocationFragment>emptySet() : tmhmmLocationFragments);
         }
+    }
+
+
+    @Override
+    public int compareTo(LocationFragment aThat) {
+        final int BEFORE = -1;
+        final int EQUAL = 0;
+        final int AFTER = 1;
+
+        //this optimization is usually worthwhile, and can
+        //always be added
+        if (this == aThat) return EQUAL;
+
+        //first consider start positions
+        if (this.start < aThat.start) return BEFORE;
+        if (this.start > aThat.start) return AFTER;
+
+        //then end positions
+        if (this.end < aThat.end) return BEFORE;
+        if (this.end > aThat.end) return AFTER;
+
+        assert this.equals(aThat) : "compareTo inconsistent with equals.";
+
+        return EQUAL;
     }
 
     @Override

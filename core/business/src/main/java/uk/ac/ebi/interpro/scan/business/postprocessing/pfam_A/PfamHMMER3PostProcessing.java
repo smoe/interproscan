@@ -5,9 +5,12 @@ import org.springframework.beans.factory.annotation.Required;
 import uk.ac.ebi.interpro.scan.business.postprocessing.pfam_A.model.PfamClan;
 import uk.ac.ebi.interpro.scan.business.postprocessing.pfam_A.model.PfamClanData;
 import uk.ac.ebi.interpro.scan.business.postprocessing.pfam_A.model.PfamModel;
+import uk.ac.ebi.interpro.scan.model.Hmmer3Match;
+import uk.ac.ebi.interpro.scan.model.LocationFragment;
 import uk.ac.ebi.interpro.scan.model.raw.PfamHmmer3RawMatch;
 import uk.ac.ebi.interpro.scan.model.raw.RawMatch;
 import uk.ac.ebi.interpro.scan.model.raw.RawProtein;
+import uk.ac.ebi.interpro.scan.util.Utilities;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -101,6 +104,7 @@ public class PfamHMMER3PostProcessing implements Serializable {
      */
     private RawProtein processProtein(final RawProtein<PfamHmmer3RawMatch> rawProteinUnfiltered, final List<SeedAlignment> seedAlignments) {
         RawProtein<PfamHmmer3RawMatch> filteredMatches = new RawProtein<PfamHmmer3RawMatch>(rawProteinUnfiltered.getProteinIdentifier());
+        RawProtein<PfamHmmer3RawMatch> filteredRawProtein = new RawProtein<PfamHmmer3RawMatch>(rawProteinUnfiltered.getProteinIdentifier());
 
         // First of all, place any rawProteinUnfiltered to methods for which this protein was a seed
         // into the filteredMatches collection.
@@ -115,6 +119,7 @@ public class PfamHMMER3PostProcessing implements Serializable {
                                 seedAlignment.getAlignmentEnd() >= candidateMatch.getLocationEnd()) {
                             // Found a match to a seed, where the coordinates fall within the seed alignment.
                             // Add it directly to the filtered rawProteinUnfiltered...
+                            Utilities.verboseLog("found match to a seed - candidateMatch and seedMatch: " + candidateMatch);
                             filteredMatches.addMatch(candidateMatch);
                             seedMatches.add(candidateMatch);
                         }
@@ -128,11 +133,13 @@ public class PfamHMMER3PostProcessing implements Serializable {
 
         for (final RawMatch rawMatch : unfilteredByEvalue) {
             final PfamHmmer3RawMatch candidateMatch = (PfamHmmer3RawMatch) rawMatch;
+            Utilities.verboseLog("consider match - candidateMatch: " + candidateMatch);
             if (!seedMatches.contains(candidateMatch)) {
                 final PfamClan candidateMatchClan = clanData.getClanByModelAccession(candidateMatch.getModelId());
 
                 boolean passes = true;   // Optimistic algorithm!
 
+                Utilities.verboseLog("candidateMatchClan: " + candidateMatchClan);
                 if (candidateMatchClan != null) {
                     // Iterate over the filtered rawProteinUnfiltered (so far) to check for passes
                     for (final PfamHmmer3RawMatch match : filteredMatches.getMatches()) {
@@ -145,6 +152,9 @@ public class PfamHMMER3PostProcessing implements Serializable {
                                 if (!matchesAreNested(candidateMatch, match)) {
                                     passes = false;
                                     break;  // out of loop over filtered rawProteinUnfiltered.
+                                }else{
+                                    Utilities.verboseLog("nested match: candidateMatch - " + candidateMatch
+                                            + " other match:- " +   match );
                                 }
                             }
                         }
@@ -157,7 +167,64 @@ public class PfamHMMER3PostProcessing implements Serializable {
                 }
             }
         }
-        return filteredMatches;
+        for (PfamHmmer3RawMatch pfamHmmer3RawMatch:filteredMatches.getMatches()){
+            if (pfamHmmer3RawMatch.getModelId() == "PF01479"){
+                PfamHmmer3RawMatch pfMatch = getTempPfamHmmer3RawMatch(pfamHmmer3RawMatch,280,298);
+                filteredMatches.addMatch(pfMatch);
+            }
+        }
+        Map<String,List<String>> nestedModelsMap = new HashMap<>();
+        List<String> nestedInModels = new ArrayList<>();
+        nestedInModels.add("PF01000");
+        //nestedInModels.add("PF01479");
+
+        nestedModelsMap.put("PF01193", nestedInModels);
+
+        for (PfamHmmer3RawMatch pfamHmmer3RawMatch:filteredMatches.getMatches()){
+            String modelId = pfamHmmer3RawMatch.getModelId();
+            Utilities.verboseLog("ModelId to consider: " + modelId + " region: [" +
+                    pfamHmmer3RawMatch.getLocationStart() + "-" + pfamHmmer3RawMatch.getLocationEnd() + "]");
+
+            List<String> nestedModels = nestedModelsMap.get(modelId);
+            if (nestedModels != null){
+                final UUID splitGroup = UUID.randomUUID();
+                pfamHmmer3RawMatch.setSplitGroup(splitGroup);
+                //get new regions
+                List<Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment> locationFragments = new ArrayList<>();
+                for (PfamHmmer3RawMatch rawMatch: filteredMatches.getMatches()){
+                    if (nestedModels.contains(rawMatch.getModelId())) {
+                        locationFragments.add(new Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment(
+                                rawMatch.getLocationStart(), rawMatch.getLocationEnd()));
+                    }
+                }
+                locationFragments.add(new Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment(
+                        380, 395));
+                //sort these according to the start and stop positions
+                Collections.sort(locationFragments);
+                int newLocationStart = pfamHmmer3RawMatch.getLocationStart();
+                int newLocationEnd = pfamHmmer3RawMatch.getLocationEnd();
+                int finalLocationEnd = pfamHmmer3RawMatch.getLocationEnd();
+                for (Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment fragment: locationFragments){
+                    Utilities.verboseLog("region to consider: " + fragment.toString());
+                    newLocationEnd = fragment.getStart() - 1;
+                    Utilities.verboseLog("New Region: " + newLocationStart + "-" + newLocationEnd);
+                    PfamHmmer3RawMatch pfMatch = getTempPfamHmmer3RawMatch(pfamHmmer3RawMatch,newLocationStart,newLocationEnd);
+                    pfMatch.setSplitGroup(splitGroup);
+                    filteredRawProtein.addMatch(pfMatch);
+                    newLocationStart = fragment.getEnd() + 1;
+                }
+                //deal with final region
+                Utilities.verboseLog("The Last new Region: " + newLocationStart + "-" + finalLocationEnd);
+                PfamHmmer3RawMatch pfMatch = getTempPfamHmmer3RawMatch(pfamHmmer3RawMatch,newLocationStart,finalLocationEnd);
+                pfMatch.setSplitGroup(splitGroup);
+                filteredRawProtein.addMatch(pfMatch);
+                //resolve the location frgaments
+            }else{
+                filteredRawProtein.addMatch(pfamHmmer3RawMatch);
+            }
+        }
+//        return filteredMatches;
+        return filteredRawProtein;
     }
 
     /**
@@ -189,4 +256,29 @@ public class PfamHMMER3PostProcessing implements Serializable {
 
     }
 
+    private PfamHmmer3RawMatch getTempPfamHmmer3RawMatch(PfamHmmer3RawMatch rawMatch, int start, int end){
+        final PfamHmmer3RawMatch match = new PfamHmmer3RawMatch(
+                rawMatch.getSequenceIdentifier(),
+                rawMatch.getModelId(),
+                rawMatch.getSignatureLibrary(),
+                rawMatch.getSignatureLibraryRelease(),
+                start,
+                end,
+                rawMatch.getEvalue(),
+                rawMatch.getScore(),
+                rawMatch.getHmmStart(),
+                rawMatch.getHmmEnd(),
+                rawMatch.getHmmBounds(),
+                rawMatch.getScore(),
+                rawMatch.getEnvelopeStart(),
+                rawMatch.getEnvelopeEnd(),
+                rawMatch.getExpectedAccuracy(),
+                rawMatch.getFullSequenceBias(),
+                rawMatch.getDomainCeValue(),
+                rawMatch.getDomainIeValue(),
+                rawMatch.getDomainBias()
+        );
+
+        return match;
+    }
 }
