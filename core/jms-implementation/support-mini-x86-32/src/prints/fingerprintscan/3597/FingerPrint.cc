@@ -82,7 +82,7 @@ bool DatabaseValues::MethodIs_pD = UsepDmethod; // Default to p * N/n method of 
 int GRAPH         = 0;
 int GRAPHDEBUG    = 0; //This will allow the graph function to use unweighted scores
 int CONSENSUS     = 0; //Global flag to determine use of consensus alignment function
-int shuffle       = 0; //Default not to call shuffle function
+int shuffleFlag   = 0; //Default not to call shuffle function
 int julian_selley = 0; //By default flag is off
 int RESTRICT      = 0; // This flag if on, will restrict all tables to reporting
 
@@ -945,7 +945,7 @@ void PrintsDbase::FindFingerPrintMatches(float evalthreshold, int UseFasta){
   while (seqp != 0) {
     FingerPrint * fingp = FingerPrintHead;
     seqp->fppoint = seqp->scorelist.Schead;
-    if (shuffle) { seqp->Shuffle();}
+    if (shuffleFlag { seqp->Shuffle();}
     // the FPScore pointer fppoint has to be reset to the head of the list
 
     while ( fingp != 0) {
@@ -1926,8 +1926,8 @@ int main (const int argc,char * argv[])
 	      options =  (atoi(argv[i+1]))?atoi(argv[i+1]):15; 
 	      break;
 	    case 'p': want_printing = 1; break;
-	    case 'R': RESTRICT =1; break;
-	    case 's': shuffle = 1; break;
+	    case 'R': RESTRICT = 1; break;
+	    case 's': shuffleFlag = 1; break;
 	    case 't':	      
 	      if (argc < (i+2)) { cout << "The -t flag requires 1 value, the score threshold" << endl; exit(0);}
 	      threshold = (atoi(argv[i+1]))?atoi(argv[i+1]):15; 

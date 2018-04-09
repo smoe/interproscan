@@ -2,7 +2,7 @@
 
 
 import sys
-import cPickle as pkl
+import pickle as pkl
 import os
 import itertools
 from collections import defaultdict
@@ -17,7 +17,7 @@ outfile = sys.argv[4]
 
 evalue_coff = 0.001
 
-discontinuous_regs =pkl.load(open(os.path.join(discontinuous_regs_file)))
+discontinuous_regs = pkl.load(open(os.path.join(discontinuous_regs_file), 'rb'), encoding='bytes')
 
 mode = "with_family"
 if len(sys.argv) > 2:
@@ -79,7 +79,7 @@ def getRegionsAsString(regions):
 
 
 def ranges(i):
-    for a, b in itertools.groupby(enumerate(i), lambda (x, y): y - x):
+    for a, b in itertools.groupby(enumerate(i), lambda x_y: x_y[1] - x_y[0]):
         b = list(b)
         yield b[0][1], b[-1][1]
 
@@ -119,7 +119,7 @@ for line in ifh:
 
     final_start_stop_list=[]
     for i in final_start_stop.split(","):
-        final_start_stop_list.append(map(int,i.split("-")))
+        final_start_stop_list.append(list(map(int,i.split("-"))))
     plup = discontinuous_regs[hmm_id]
    
     
@@ -133,9 +133,9 @@ for line in ifh:
     resi_dom={}
     for areg in alignment_regs.split(";"):
         hmm_region, seq_region = areg.split(",") 
-        hmm_start, hmm_stop =map(int, hmm_region.split("-"))
-        seq_start, seq_stop =map(int, seq_region.split("-"))
-        seq_pos = range(seq_start, seq_stop +1)
+        hmm_start, hmm_stop = list(map(int, hmm_region.split("-")))
+        seq_start, seq_stop = list(map(int, seq_region.split("-")))
+        seq_pos = list(range(seq_start, seq_stop +1))
         
                
         for c,i in enumerate(range(hmm_start, hmm_stop+1)):
@@ -148,7 +148,7 @@ for line in ifh:
             if dom: 
                 dom_sequence_regs[dom].append(seq_pos[c])
     #fill 
-    for dom, regs in dom_sequence_regs.items():
+    for dom, regs in list(dom_sequence_regs.items()):
         
         sequence_regs = rangesAsList(regs)
         new_sequence_regs=[]

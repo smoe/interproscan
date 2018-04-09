@@ -69,11 +69,11 @@ def get_hamap_profile(profiles_list_filename):
                        profiles[profile] = [profile_path, seq_id]
                        #print profiles[profile]
                 else:
-                    print ('something wrong ' + line)
+                    print('something wrong ' + line)
                     sys.stderr.write('something wrong ' + line)
                     hit_line = 'not ok - ' + line
                 #append_to_file(temp_err_file, hit_line+'\n') 
-    key_count = len(profiles.keys())
+    key_count = len(list(profiles.keys()))
     append_to_file(temp_err_file, 'profile hits: ' + str(key_count) + '\n')
     return profiles
 
@@ -106,7 +106,7 @@ def get_sequences_for_profile(key_list, seqs_dict):
                 sequences += '\n'
 	    #print 'ok', sequences
         else:
-            print ("key not found : " + key)
+            print("key not found : " + key)
 
     #print 'ok', sequences
     return sequences
@@ -135,11 +135,11 @@ def run_pfsearch_binary(arg_list, profiles, seqs_dict, input_fasta_file, command
     #prf_half = int(len(profiles) / 2)
     temp_err_file = profiles_list_filename + '-filtered'
         
-    append_to_file(temp_err_file, 'profile hits in run_pfsearch: ' + str(len(profiles.keys())) + '\n')
+    append_to_file(temp_err_file, 'profile hits in run_pfsearch: ' + str(len(list(profiles.keys()))) + '\n')
 
-    append_to_file(temp_err_file, 'sequence count in run_pfsearch: ' + str(len(seqs_dict.keys())) + '\n')
+    append_to_file(temp_err_file, 'sequence count in run_pfsearch: ' + str(len(list(seqs_dict.keys()))) + '\n')
     get_seq_time = 0
-    keys = profiles.keys()
+    keys = list(profiles.keys())
     write_to_file(temp_err_file + '-keys', 'profile keys in run_pfsearch: ' + str(len(keys)) + '\n')
     for prf in profiles:
         prf_seqs = ' '.join(profiles[prf])
@@ -243,9 +243,9 @@ if __name__ == "__main__":
             pfsearch_cmd_run_count = run_pfsearch_binary(arg_list, profiles,seqs_dict, fasta_file, command_index)
             sys.stderr.write('prfs: ' + str(count))
     except:
-        print (sys.version)
-        print ("Unexpected error: ")
-        print (sys.exc_info())
+        print(sys.version)
+        print("Unexpected error: ")
+        print(sys.exc_info())
 
 
 
