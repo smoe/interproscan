@@ -37,10 +37,12 @@ public class CathResolveHitsOutputParser {
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
                 // Look for a domain data line.
-                CathResolverRecord cathRecord = CathResolverRecord.valueOf(line);
-                if (cathRecord != null) {
-                    String key = cathRecord.getRecordKey();
-                    cathResolverRecordMap.put(key, cathRecord);
+                if (! line.trim().isEmpty()) {
+                    CathResolverRecord cathRecord = CathResolverRecord.valueOf(line);
+                    if (cathRecord != null) {
+                        String key = cathRecord.getRecordKey();
+                        cathResolverRecordMap.put(key, cathRecord);
+                    }
                 }
             }
         } finally {
