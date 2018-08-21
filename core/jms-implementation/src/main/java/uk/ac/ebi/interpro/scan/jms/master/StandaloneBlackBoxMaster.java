@@ -31,6 +31,7 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
     private StatsUtil statsUtil;
 
     private DefaultMessageListenerContainer workerQueueJmsContainer;
+    private DefaultMessageListenerContainer workerQueueJmsThinContainer;
 
     private static final int MEGA = 1024 * 1024;
 
@@ -315,5 +316,11 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
     }
 
 
+    public DefaultMessageListenerContainer getWorkerQueueJmsThinContainer() {
+        return workerQueueJmsThinContainer;
+    }
 
+    public void setWorkerQueueJmsThinContainer(DefaultMessageListenerContainer workerQueueJmsThinContainer) {
+        this.workerQueueJmsThinContainer = workerQueueJmsThinContainer;
+    }
 }

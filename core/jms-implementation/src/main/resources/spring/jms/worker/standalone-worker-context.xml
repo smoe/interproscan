@@ -19,6 +19,21 @@
         <property name="autoStartup" value="true"/>
     </bean>
 
+
+    <!--Configuration for the local job queue listener as a thin client-->
+    <bean id="localQueueJmsContainerThinMaster" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="destination" ref="jobRequestQueue"/>
+        <property name="messageListener" ref="amqEmbeddedWorker"/>
+        <property name="concurrentConsumers" value="${thinmaster.number.of.embedded.workers}"/>
+        <property name="maxConcurrentConsumers" value="${thinmaster.maxnumber.of.embedded.workers}"/>
+        <property name="sessionTransacted" value="true"/>
+        <property name="sessionAcknowledgeModeName" value="CLIENT_ACKNOWLEDGE"/>
+        <property name="messageSelector" value="remote = FALSE"/>
+        <property name="autoStartup" value="true"/>
+    </bean>
+
+
     <!--<bean id="amqEmbeddedWorkerJmsContainerThinMaster" class="org.springframework.jms.listener.DefaultMessageListenerContainer">-->
         <!--<property name="connectionFactory" ref="connectionFactory"/>-->
         <!--<property name="destination" ref="jobRequestQueue"/>-->
@@ -72,5 +87,6 @@
     </bean>
 
     <bean id="statsMessageListener" class="uk.ac.ebi.interpro.scan.jms.stats.StatsMessageListener"/>
+
 
 </beans>

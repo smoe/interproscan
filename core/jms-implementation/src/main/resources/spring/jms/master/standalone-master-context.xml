@@ -49,6 +49,7 @@
         <property name="statsUtil" ref="statsUtil"/>
         <property name="concurrentInVmWorkerCount" value="${number.of.embedded.workers}"/>
         <property name="maxConcurrentInVmWorkerCount" value="${maxnumber.of.embedded.workers}"/>
+        <property name="workerQueueJmsThinContainer" ref="localQueueJmsContainerThinMaster"/>
         <property name="deleteWorkingDirectoryOnCompletion" value="${delete.temporary.directory.on.completion}"/>
         <property name="temporaryDirectoryManager" ref="tempDirectoryManager"/>
         <property name="temporaryFileDirSuffix" value="${temporary.file.directory.suffix}"/>

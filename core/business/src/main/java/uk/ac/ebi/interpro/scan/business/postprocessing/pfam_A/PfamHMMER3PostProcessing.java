@@ -249,8 +249,8 @@ public class PfamHMMER3PostProcessing implements Serializable {
                             newMatchesFromFragment.add(rawDiscontinuousMatch);  // we add this match as previously processed
                             continue;
                         }
-                        if (fragment.getStart() < newLocationStart && fragment.getEnd() > newLocationEnd){
-                            fragmentDCStatus = DCStatus.NC_TERMINAL_DISC;
+                        if (fragment.getStart() <= newLocationStart && fragment.getEnd() >= newLocationEnd){
+                            fragmentDCStatus = DCStatus.CONTINUOUS;
                             rawDiscontinuousMatch.setLocFragmentDCStatus(fragmentDCStatus.getSymbol());
                             newMatchesFromFragment.add(rawDiscontinuousMatch);
                             continue;
