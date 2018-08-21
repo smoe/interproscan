@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import java.lang.IllegalStateException;
+
 /**
  * Location fragment of location of match on protein sequence.
  *
@@ -86,6 +88,14 @@ public abstract class LocationFragment implements Serializable, Cloneable, Compa
         setDcStatus(dcStatus);
     }
 
+    private boolean locationLengthCheck(int start, int end){
+        if (start > end){
+            String messageOout = "start: " + start + " end: " + end;
+            throw new IllegalStateException("Location start is greater than location end :- " + messageOout);
+            return false;
+        }
+        return true;
+    }
     /**
      * @return the persistence unique identifier for this object.
      */
