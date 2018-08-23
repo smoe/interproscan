@@ -80,22 +80,24 @@ public abstract class LocationFragment implements Serializable, Cloneable, Compa
         setStart(start);
         setEnd(end);
         setDcStatus(DCStatus.CONTINUOUS);
+        locationLengthCheck();
     }
 
     public LocationFragment(int start, int end, DCStatus dcStatus) {
         setStart(start);
         setEnd(end);
         setDcStatus(dcStatus);
+        locationLengthCheck();
     }
 
-    private boolean locationLengthCheck(int start, int end){
-        if (start > end){
-            String messageOout = "start: " + start + " end: " + end;
-            throw new IllegalStateException("Location start is greater than location end :- " + messageOout);
-            return false;
-        }
-        return true;
+    /**
+     *  check if start is less than end to avoind domains with negative length
+     *
+     */
+    public void  locationLengthCheck(){
+        assert (this.start <= this.end);
     }
+
     /**
      * @return the persistence unique identifier for this object.
      */
@@ -127,6 +129,9 @@ public abstract class LocationFragment implements Serializable, Cloneable, Compa
      */
     private void setStart(int start) {
         this.start = start;
+        if (this.end != 0){
+            locationLengthCheck();
+        }
     }
 
     /**
@@ -146,6 +151,9 @@ public abstract class LocationFragment implements Serializable, Cloneable, Compa
      */
     private void setEnd(int end) {
         this.end = end;
+        if (this.start != 0){
+            locationLengthCheck();
+        }
     }
 
     @XmlAttribute(name="dc-status", required = true)

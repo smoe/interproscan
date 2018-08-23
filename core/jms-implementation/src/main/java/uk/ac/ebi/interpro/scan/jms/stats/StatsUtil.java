@@ -383,16 +383,25 @@ public class StatsUtil {
         Set<String> nonAcknowledgedStepInstances = new TreeSet<String>();
         Utilities.verboseLog(" submittedStepInstances:" + ids.size());
 
-        for (Object entry : submittedStepInstances.entrySet()) {
-            if (!((Map.Entry<Integer, String>) entry).getValue().contains("Done")) {
-                nonAcknowledgedStepInstances.add(((Map.Entry<Integer, String>) entry).getValue());
+        for (Map.Entry<String, Map<String, String>> entry : submittedStepInstances.entrySet()) {
+            //Map.Entry<Integer, String> entryValue =  ((Map.Entry<Integer, String>) entry).getValue();
+            String key = (String) entry.getKey();
+            Map<String, String> jobStatus = (Map<String, String>) entry.getValue();
+            String status = "Done";
+            for (Map.Entry<String, String> entryStatus : jobStatus.entrySet()) {
+                String jobStatusValue = (String) entryStatus.getValue();
+                if (!jobStatusValue.equals(status)) {
+                        Utilities.verboseLog("jobStatus:" + jobStatus.toString());
+                        String stepName = key + "-" + entryStatus.getKey();
+                        nonAcknowledgedStepInstances.add(stepName);
+                }
             }
         }
         return nonAcknowledgedStepInstances;
     }
 
     public Map<String, Integer> getNonAcknowledgedSubmittedStepInstancesCounts() {
-        Utilities.verboseLog(" getNonAcknowledgedSubmittedStepInstances:");
+        Utilities.verboseLog(" getNonAcknowledgedSubmittedStepInstances counts:");
         Map<String, Integer>  nonAcknowledgedStepInstances = new HashMap<>();
         for  (Map.Entry<String, Map<String, String>> elem:submittedStepInstances.entrySet()) {
             String key = (String) elem.getKey();
