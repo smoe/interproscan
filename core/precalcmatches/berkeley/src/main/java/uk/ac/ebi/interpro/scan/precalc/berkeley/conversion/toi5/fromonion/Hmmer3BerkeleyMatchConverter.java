@@ -7,7 +7,6 @@ import uk.ac.ebi.interpro.scan.model.Signature;
 import uk.ac.ebi.interpro.scan.model.DCStatus;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.conversion.toi5.BerkeleyMatchConverter;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyLocation;
-import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyLocationFragment;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyMatch;
 
 import java.util.HashSet;
@@ -40,27 +39,26 @@ public class Hmmer3BerkeleyMatchConverter extends BerkeleyMatchConverter<Hmmer3M
             int locationEnd = valueOrZero(location.getEnd());
 
             int envStart = location.getEnvelopeStart() == null
-                    ? (location.getStart() == null ? 0 : location.getStart())
+                    ? locationStart
                     : location.getEnvelopeStart();
             int envEnd =  location.getEnvelopeEnd() == null
-                    ? location.getEnd() == null ? 0 : location.getEnd()
+                    ? locationEnd
                     : location.getEnvelopeEnd();
 
-            final Set<Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment> locationFragments = new HashSet<>(location.getLocationFragments().size());
-            for (BerkeleyLocationFragment fragment : location.getLocationFragments()) {
-                int fragStart = valueOrZero(fragment.getStart());
-                int fragEnd = valueOrZero(fragment.getEnd());
-                String dcStatus = fragment.getDcStatus();
-                if (dcStatus == null) {
-                    LOG.warn("NULL dcStatus for fragment " + fragStart + " - " + fragEnd + " in " + sln + " " + match.getSignatureAccession());
-                    dcStatus = "S"; // Default
-                }
-                locationFragments.add(new Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment(fragStart, fragEnd, DCStatus.parseSymbol(dcStatus)));
+            String locationFragmentsStr = location.getLocationFragments();
+            if (locationFragmentsStr == null || locationFragmentsStr.isEmpty()) {
+                locationFragmentsStr = locationStart + "-" + locationEnd + "-S";
             }
-            if (locationFragments.isEmpty()) {
-                // Only required if location fragments for this match are not in the lookup service (shouldn't happen)
-                Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment f = new Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment(locationStart, locationEnd, DCStatus.CONTINUOUS);
-                locationFragments.add(f);
+            Set<Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment> locationFragments = new HashSet<>();
+            for (String locationFragmentStr : locationFragmentsStr.split(",")) {
+                String[] str = locationFragmentStr.trim().split("-");
+                if (str.length != 3) {
+                    throw new IllegalStateException("Location fragment " + locationFragmentsStr + " not correct format (e.g. '10-20-S,30-40-S'");
+                }
+                Integer i1 = Integer.parseInt(str[0]);
+                Integer i2 = Integer.parseInt(str[1]);
+                DCStatus dc = DCStatus.parseSymbol(str[2]);
+                locationFragments.add(new Hmmer3Match.Hmmer3Location.Hmmer3LocationFragment(i1, i2, dc));
             }
 
             final HmmBounds bounds = HmmBounds.parseSymbol(HmmBounds.calculateHmmBounds(envStart, envEnd, locationStart, locationEnd));

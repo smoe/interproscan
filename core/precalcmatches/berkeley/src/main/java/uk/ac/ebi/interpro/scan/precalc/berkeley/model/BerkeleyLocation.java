@@ -2,11 +2,6 @@ package uk.ac.ebi.interpro.scan.precalc.berkeley.model;
 
 import com.sleepycat.persist.model.Persistent;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import java.util.Set;
-import java.util.TreeSet;
-
 
 /**
  * Very simple Location implementation for data transfer &
@@ -52,26 +47,7 @@ public class BerkeleyLocation implements Comparable<BerkeleyLocation> {
 
     private String seqFeature;
 
-    private Set<BerkeleyLocationFragment> locationFragments;
-
-    // XmLElementWrapper generates a wrapper element around XML representation
-    @XmlElementWrapper(name = "location-fragments")
-    // XmlElement sets the name of the entities
-    @XmlElement(name = "location-fragment")
-    public Set<BerkeleyLocationFragment> getLocationFragments() {
-        return locationFragments;
-    }
-
-    public void setLocationFragments(Set<BerkeleyLocationFragment> locationFragments) {
-        this.locationFragments = locationFragments;
-    }
-
-    public void addLocationFragment(BerkeleyLocationFragment locationFragment) {
-        if (this.locationFragments == null) {
-            this.locationFragments = new TreeSet<>();
-        }
-        locationFragments.add(locationFragment);
-    }
+    private String locationFragments;
 
     public BerkeleyLocation() {
     }
@@ -194,6 +170,14 @@ public class BerkeleyLocation implements Comparable<BerkeleyLocation> {
 
     public void setSeqFeature(String seqFeature) {
         this.seqFeature = seqFeature;
+    }
+
+    public String getLocationFragments() {
+        return locationFragments;
+    }
+
+    public void setLocationFragments(String locationFragments) {
+        this.locationFragments = locationFragments;
     }
 
     @Override

@@ -9,18 +9,13 @@ import com.sleepycat.persist.StoreConfig;
 import uk.ac.ebi.interpro.scan.model.SignatureLibrary;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.conversion.toi5.SignatureLibraryLookup;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyLocation;
-import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyLocationFragment;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyMatch;
 import uk.ac.ebi.interpro.scan.util.Utilities;
 
 import java.io.File;
 import java.sql.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Creates a Berkeley database of proteins for which matches have been calculated in IPRSCAN.
@@ -183,7 +178,7 @@ public class CreateMatchDBFromIprscan {
             PreparedStatement ps = null;
             ResultSet rs = null;
             try {
-                long locationFragmentCount = 0, locationCount = 0, matchCount = 0;
+                long locationCount = 0, matchCount = 0;
 
                 for (Map.Entry<String, String> md5RangesMapEntry : md5RangesMap.entrySet()) {
                     final String md5Start = md5RangesMapEntry.getKey();
@@ -313,14 +308,11 @@ public class CreateMatchDBFromIprscan {
                         location.setEnvelopeStart(envelopeStart);
                         location.setEnvelopeEnd(envelopeEnd);
                         location.setSeqFeature(seqFeature);
-                        //we done have a column for cigar alignment so we can just as well reuse the column seqFeatures
-                        location.setCigarAlignment(seqFeature); //TODO check this and test
-
-                        Set<BerkeleyLocationFragment> berkeleyLocationFragments = parseLocationFragments(fragments);
-                        location.setLocationFragments(berkeleyLocationFragments);
+                        //we don't have a column for cigar alignment so we can just as well reuse the column seqFeatures
+                        location.setCigarAlignment(seqFeature);
+                        location.setLocationFragments(fragments);
 
                         locationCount++;
-                        locationFragmentCount = locationFragmentCount + berkeleyLocationFragments.size();
 
                         if (match == null || !signatureLibrary.isInterproMDB()) {
 
@@ -329,7 +321,7 @@ public class CreateMatchDBFromIprscan {
                                 primIDX.put(match);
                                 matchCount++;
                                 if (matchCount % 1000000 == 0) {
-                                    System.out.println(Utilities.getTimeNow() + " Stored " + matchCount + " matches, with a total of " + locationCount + " locations and " + locationFragmentCount + " fragments.");
+                                    System.out.println(Utilities.getTimeNow() + " Stored " + matchCount + " matches, with a total of " + locationCount + " locations.");
                                 }
                             }
 
@@ -361,7 +353,7 @@ public class CreateMatchDBFromIprscan {
                                 primIDX.put(match);
                                 matchCount++;
                                 if (matchCount % 1000000 == 0) {
-                                    System.out.println(Utilities.getTimeNow() + " Stored " + matchCount + " matches, with a total of " + locationCount + " locations and " + locationFragmentCount + " fragments.");
+                                    System.out.println(Utilities.getTimeNow() + " Stored " + matchCount + " matches, with a total of " + locationCount + " locations.");
                                 }
 
                                 // Create new match and add location to it
@@ -382,7 +374,7 @@ public class CreateMatchDBFromIprscan {
                         primIDX.put(match);
                     }
                 }
-                System.out.println(Utilities.getTimeNow() + " Stored " + matchCount + " matches, with a total of " + locationCount + " locations and " + locationFragmentCount + " fragments.");
+                System.out.println(Utilities.getTimeNow() + " Stored " + matchCount + " matches, with a total of " + locationCount + " locations.");
             } finally {
                 if (rs != null) rs.close();
                 if (ps != null) ps.close();
@@ -466,42 +458,4 @@ public class CreateMatchDBFromIprscan {
         }
     }
 
-    public static Set<BerkeleyLocationFragment> parseLocationFragments(final String fragments) {
-        // Example fragments input: "10-20-S,34-39-S"
-        Set<BerkeleyLocationFragment> berkeleyLocationFragments = new HashSet<>();
-        if (fragments == null || fragments.equals("")) {
-            return berkeleyLocationFragments;
-        }
-
-        Pattern pattern = Pattern.compile("^[0-9]+-[0-9]+-(S|N|C|NC)$");
-        String[] input = fragments.trim().split(",");
-        for (String s : input) {
-            Matcher matcher = pattern.matcher(s);
-            if (matcher.find()) {
-                String[] a = s.split("-");
-                if (a.length == 3) {
-                    BerkeleyLocationFragment berkeleyLocationFragment = new BerkeleyLocationFragment();
-                    berkeleyLocationFragment.setStart(Integer.parseInt(a[0]));
-                    berkeleyLocationFragment.setEnd(Integer.parseInt(a[1]));
-                    if (berkeleyLocationFragment.getStart() > berkeleyLocationFragment.getEnd()) {
-                        // Shouldn't happen, but log and skip if it does
-                        System.out.println("Error parsing fragment '" + s + "' from fragment string (end is before start): " + fragments);
-                        continue;
-                    }
-                    berkeleyLocationFragment.setDcStatus(a[2]);
-                    berkeleyLocationFragments.add(berkeleyLocationFragment);
-                }
-                else {
-                    throw new IllegalArgumentException("Error parsing fragment '" + s + "' from fragment string: " + fragments);
-                }
-            }
-            else {
-                throw new IllegalArgumentException("Error parsing fragment string: " + fragments);
-            }
-        }
-        if (berkeleyLocationFragments.isEmpty()) {
-            throw new IllegalArgumentException("No fragments could be parsed from fragment string: " + fragments);
-        }
-        return berkeleyLocationFragments;
-    }
 }

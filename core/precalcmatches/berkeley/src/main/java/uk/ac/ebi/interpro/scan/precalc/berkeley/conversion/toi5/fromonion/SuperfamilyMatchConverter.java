@@ -6,7 +6,6 @@ import uk.ac.ebi.interpro.scan.model.Signature;
 import uk.ac.ebi.interpro.scan.model.SuperFamilyHmmer3Match;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.conversion.toi5.BerkeleyMatchConverter;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyLocation;
-import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyLocationFragment;
 import uk.ac.ebi.interpro.scan.precalc.berkeley.model.BerkeleyMatch;
 
 import java.util.HashSet;
@@ -34,17 +33,23 @@ public class SuperfamilyMatchConverter extends BerkeleyMatchConverter<SuperFamil
         for (BerkeleyLocation location : match.getLocations()) {
             int start = valueOrZero(location.getStart());
             int end = valueOrZero(location.getEnd());
-            Set<SuperFamilyHmmer3Match.SuperFamilyHmmer3Location.SuperFamilyHmmer3LocationFragment> locationFragments = new HashSet<>(location.getLocationFragments().size());
-            for (BerkeleyLocationFragment locationFragment : location.getLocationFragments()) {
-                int fragStart = valueOrZero(locationFragment.getStart());
-                int fragEnd = valueOrZero(locationFragment.getEnd());
-                String dcStatus = locationFragment.getDcStatus(); // Always default ("S") for SUPERFAMILY?
-                if (dcStatus == null) {
-                    LOG.warn("NULL dcStatus for fragment " + fragStart + " - " + fragEnd + " in SUPERFAMILY " + match.getSignatureAccession());
-                    dcStatus = "S"; // Default
-                }
-                locationFragments.add(new SuperFamilyHmmer3Match.SuperFamilyHmmer3Location.SuperFamilyHmmer3LocationFragment(fragStart, fragEnd, DCStatus.parseSymbol(dcStatus)));
+
+            String locationFragmentsStr = location.getLocationFragments();
+            if (locationFragmentsStr == null || locationFragmentsStr.isEmpty()) {
+                locationFragmentsStr = start + "-" + end + "-S";
             }
+            Set<SuperFamilyHmmer3Match.SuperFamilyHmmer3Location.SuperFamilyHmmer3LocationFragment> locationFragments = new HashSet<>();
+            for (String locationFragmentStr : locationFragmentsStr.split(",")) {
+                String[] str = locationFragmentStr.trim().split("-");
+                if (str.length != 3) {
+                    throw new IllegalStateException("Location fragment " + locationFragmentsStr + " not correct format (e.g. '10-20-S,30-40-S'");
+                }
+                Integer i1 = Integer.parseInt(str[0]);
+                Integer i2 = Integer.parseInt(str[1]);
+                DCStatus dc = DCStatus.parseSymbol(str[2]);
+                locationFragments.add(new SuperFamilyHmmer3Match.SuperFamilyHmmer3Location.SuperFamilyHmmer3LocationFragment(i1, i2, dc));
+            }
+
             locations.add(new SuperFamilyHmmer3Match.SuperFamilyHmmer3Location(
                     start,
                     end,
