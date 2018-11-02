@@ -50,6 +50,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- to monitor performance -->
+        <dependency>
+            <groupId>net.bull.javamelody</groupId>
+            <artifactId>javamelody-core</artifactId>
+            <version>1.69.0</version>
+        </dependency>
+
     </dependencies>
     <properties>
         <i5.version>${project.version}</i5.version>
@@ -87,6 +94,7 @@
                     <plugin>
                         <groupId>org.mortbay.jetty</groupId>
                         <artifactId>maven-jetty-plugin</artifactId>
+                        <!--<version>9.4.12.v20180830</version>-->
                         <version>6.1.26</version>
                         <!-- Set up the context path and the default port -->
                         <configuration>

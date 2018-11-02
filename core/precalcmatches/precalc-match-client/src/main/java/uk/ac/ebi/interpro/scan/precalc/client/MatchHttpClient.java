@@ -175,7 +175,7 @@ public class MatchHttpClient {
         httpclient.close();
 //        Utilities.verboseLog("matchXML:" + matchXML.toString());
         long timeToGetMatches = System.currentTimeMillis() - startGetMatches;
-        System.out.println(Utilities.getTimeNow() + " Took  " + timeToGetMatches + " millis to get  matches  for  " + md5s.length  + " md5s");
+        Utilities.verboseLog(10, " Took  " + timeToGetMatches + " millis to get  matches  for  " + md5s.length  + " md5s");
 
         return matchXML;
     }
