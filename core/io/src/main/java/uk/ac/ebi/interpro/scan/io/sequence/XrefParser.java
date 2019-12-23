@@ -23,7 +23,8 @@ public class XrefParser {
     private static final Pattern PIPE_REGEX = Pattern.compile("\\|");
 
     private static final Pattern GETORF_HEADER_PATTERN = Pattern.compile("^(.+)\\s+(\\[\\d+\\s+\\-\\s+\\d+].*)$");
-
+    //private static final Pattern ESLTRANSLATE_HEADER_PATTERN = Pattern.compile("^(.+)\\s+source=(\\S+)coords=(\\S+)length=(\\d+)frame=(\\d)desc=(\\S+)$");
+    private static final Pattern ESLTRANSLATE_HEADER_PATTERN = Pattern.compile("^(\\S+)\\s+(\\S+)\\s+(.+)$");
     /**
      * Everything before the first whitespace will be recognised as the identifier and everything afterwards will be kind of description.
      */
@@ -117,22 +118,27 @@ public class XrefParser {
             TODO - possibly move back to original position in code (see commented-out code below) when the long-term fix is implemented
 
              */
-            final Matcher matcher = GETORF_HEADER_PATTERN.matcher(crossReference);
+            //final Matcher matcher = GETORF_HEADER_PATTERN.matcher(crossReference);
+            final Matcher matcher = ESLTRANSLATE_HEADER_PATTERN.matcher(crossReference.trim());
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Checking for match to GETORF regex, crossRef: " + crossReference);
 
             String originalHeaderName = crossReference.trim();
+            LOGGER.warn("crossReference: " + crossReference);
 
             if (matcher.find()) {
                 //Utilities.verboseLog("MATCHES GETORF_HEADER_PATTERN");
                 //Utilities.verboseLog("originalHeaderName: " + originalHeaderName + " and now xref-id : " + matcher.group(1));
-                return new ProteinXref(null, matcher.group(1), originalHeaderName, matcher.group(2));
+                String identifier = matcher.group(1).replace(">", "");
+                String description = matcher.group(2) + "\t"  + matcher.group(3);
+                LOGGER.warn("identifier: " + identifier +  " description: " + description);
+                return new ProteinXref(null, identifier, originalHeaderName, description);
             }
 
 	        // this eventually should be the only way to parse the header
             if (originalHeaderName.length() > 1) {
                 //Test using the header
-                //Utilities.verboseLog("originalHeaderName: " + originalHeaderName);
+                Utilities.verboseLog("originalHeaderName: " + originalHeaderName);
                 return stripUniqueIdentifierAndTrimForProteinSeqDefault(originalHeaderName);
             }
 

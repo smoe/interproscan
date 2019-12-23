@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Required;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.interpro.scan.business.sequence.SequenceLoadListener;
 import uk.ac.ebi.interpro.scan.business.sequence.SequenceLoader;
-import uk.ac.ebi.interpro.scan.io.getorf.GetOrfDescriptionLineParser;
+import uk.ac.ebi.interpro.scan.io.ntranslate.ORFDescriptionLineParser;
 import uk.ac.ebi.interpro.scan.io.sequence.XrefParser;
 import uk.ac.ebi.interpro.scan.model.*;
 import uk.ac.ebi.interpro.scan.persistence.NucleotideSequenceDAO;
@@ -57,7 +57,7 @@ public class LoadFastaFileIntoDBImpl<T> implements LoadFastaFile {
 
     private boolean isGetOrfOutput;
 
-    private GetOrfDescriptionLineParser descriptionLineParser;
+    private ORFDescriptionLineParser descriptionLineParser;
 
     @Required
     public void setProteinDAO(ProteinDAO proteinDAO) {
@@ -80,7 +80,7 @@ public class LoadFastaFileIntoDBImpl<T> implements LoadFastaFile {
         isGetOrfOutput = getOrfOutput;
     }
 
-    public void setDescriptionLineParser(GetOrfDescriptionLineParser descriptionLineParser) {
+    public void setDescriptionLineParser(ORFDescriptionLineParser descriptionLineParser) {
         this.descriptionLineParser = descriptionLineParser;
     }
 
@@ -344,7 +344,9 @@ public class LoadFastaFileIntoDBImpl<T> implements LoadFastaFile {
             for (ProteinXref xref : xrefs) {
                 String nucleotideId = xref.getIdentifier();
                 String description = xref.getDescription();
+                String originalHeader = xref.getName();
                 Long startNewOrf = System.currentTimeMillis();
+                LOGGER.warn("nucleotideId: " + nucleotideId + " originalHeader: " + originalHeader + " description: " + description);
                 OpenReadingFrame newOrf = descriptionLineParser.createORFFromParsingResult(description);
                 //Get rid of the underscore
                 nucleotideId = XrefParser.stripOfFinalUnderScore(nucleotideId);
