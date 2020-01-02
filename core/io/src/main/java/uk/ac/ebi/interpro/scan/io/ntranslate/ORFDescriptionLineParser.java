@@ -28,7 +28,7 @@ public class ORFDescriptionLineParser {
         if (matcher.find()) {
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Matched!");
             String coords = matcher.group(2);
-            String [] coordsPair = coords.split("..");
+            String [] coordsPair = coords.replace("coords=", "").split("\\.\\.");
             LOGGER.warn("coords: " + coords);
             final int start = Integer.parseInt(coordsPair[0]);
             final int end = Integer.parseInt(coordsPair[1]);

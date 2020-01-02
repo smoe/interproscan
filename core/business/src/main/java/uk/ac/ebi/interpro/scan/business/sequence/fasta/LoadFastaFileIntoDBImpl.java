@@ -349,7 +349,11 @@ public class LoadFastaFileIntoDBImpl<T> implements LoadFastaFile {
                 LOGGER.warn("nucleotideId: " + nucleotideId + " originalHeader: " + originalHeader + " description: " + description);
                 OpenReadingFrame newOrf = descriptionLineParser.createORFFromParsingResult(description);
                 //Get rid of the underscore
+                LOGGER.warn("nucleotideId: " + nucleotideId + " protein: " +  newProtein.toString());
+                //String mode = "translate";
+                //if (! mode.equals( "translate") ){
                 nucleotideId = XrefParser.stripOfFinalUnderScore(nucleotideId);
+                //}
                 /*
                   Commented-out version number stripping to allow the short-term fix for nucleotide headers to work (IBU-2426)
                   TODO - consider if this is really necessary (may not be a good idea in all cases)
