@@ -342,18 +342,22 @@ public class LoadFastaFileIntoDBImpl<T> implements LoadFastaFile {
             toDebugPrint(newProteins.size(), proteinCount,
                     "getCrossReferences: " + (System.currentTimeMillis() - startPersistProtein ) + " millis ");
             for (ProteinXref xref : xrefs) {
-                String nucleotideId = xref.getIdentifier();
-                String description = xref.getDescription();
+                String orfId = xref.getIdentifier();
+                String nucleotideId = xref.getName();
                 String originalHeader = xref.getName();
+                String description = xref.getDescription();
+
                 Long startNewOrf = System.currentTimeMillis();
-                LOGGER.warn("nucleotideId: " + nucleotideId + " originalHeader: " + originalHeader + " description: " + description);
+                LOGGER.warn("orfId: " +  orfId + " nucleotideId: " + nucleotideId + " originalHeader: " + originalHeader + " description: " + description);
                 OpenReadingFrame newOrf = descriptionLineParser.createORFFromParsingResult(description);
+                LOGGER.warn("newOrf: " + newOrf.toString());
                 //Get rid of the underscore
                 LOGGER.warn("nucleotideId: " + nucleotideId + " protein: " +  newProtein.toString());
-                //String mode = "translate";
-                //if (! mode.equals( "translate") ){
-                nucleotideId = XrefParser.stripOfFinalUnderScore(nucleotideId);
-                //}
+                String mode = "translate";
+                if (! mode.equals( "translate") ){
+                    nucleotideId = XrefParser.stripOfFinalUnderScore(nucleotideId);
+                }
+
                 /*
                   Commented-out version number stripping to allow the short-term fix for nucleotide headers to work (IBU-2426)
                   TODO - consider if this is really necessary (may not be a good idea in all cases)
@@ -365,18 +369,34 @@ public class LoadFastaFileIntoDBImpl<T> implements LoadFastaFile {
                 toDebugPrint(newProteins.size(), proteinCount,
                         "newOrf: " + (startRetrieveByXrefIdentifier - startNewOrf ) + " millis ");
 
+                //DEBUG TODO remove
+//                List<NucleotideSequence> seqs= nucleotideSequenceDAO.retrieveAll();
+//                for (NucleotideSequence ns: seqs) {
+//                    Set<NucleotideSequenceXref> nsXrefs = ns.getCrossReferences() ;
+//                    for (NucleotideSequenceXref nsXref: nsXrefs) {
+//                        LOGGER.debug("Nucleotide xref identifier: " + nsXref.getIdentifier());
+//                    }
+//                    LOGGER.warn("ns:: " + ns.toString());
+//                }
+
+                //TEMP disable
+                //NucleotideSequence nucleotide = null;
                 NucleotideSequence nucleotide = nucleotideSequenceDAO.retrieveByXrefIdentifier(nucleotideId);
+                LOGGER.warn("nucleotideId: " + nucleotideId + " nucleotide: " + nucleotide.getSequence() + " ID: " + nucleotide.getId());
+
                 //In cases the FASTA file contained sequences from ENA or any other database (e.g. ENA|AACH01000026|AACH01000026.1 Saccharomyces)
                 //the nucleotide can be NULL and therefore we need to get the nucleotide sequence by name
                 if (nucleotide == null) {
-                    if (LOGGER.isDebugEnabled()) {
+                    if (LOGGER.isDebugEnabled() ||  mode.equals( "translate")) {
                         List<NucleotideSequence> seqs= nucleotideSequenceDAO.retrieveAll();
                         for (NucleotideSequence ns: seqs) {
                             Set<NucleotideSequenceXref> nsXrefs = ns.getCrossReferences() ;
                             for (NucleotideSequenceXref nsXref: nsXrefs) {
                                 LOGGER.debug("Nucleotide xref identifier: " + nsXref.getIdentifier());
                             }
+                            LOGGER.warn("ns:: " + ns.toString());
                         }
+
                     }
                     throw new IllegalStateException("Couldn't find nucleotide sequence by the following cross reference: " + nucleotideId);
 

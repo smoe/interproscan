@@ -25,6 +25,8 @@ public class XrefParser {
     private static final Pattern GETORF_HEADER_PATTERN = Pattern.compile("^(.+)\\s+(\\[\\d+\\s+\\-\\s+\\d+].*)$");
     //private static final Pattern ESLTRANSLATE_HEADER_PATTERN = Pattern.compile("^(.+)\\s+source=(\\S+)coords=(\\S+)length=(\\d+)frame=(\\d)desc=(\\S+)$");
     private static final Pattern ESLTRANSLATE_HEADER_PATTERN = Pattern.compile("^(\\S+)\\s+(\\S+)\\s+(.+)$");
+    private static final Pattern ESLTRANSLATE_HEADER_SOURCE_PATTERN = Pattern.compile("^\\S+\\s+source=(\\S+)\\s+coords=(\\S+)\\s+length=(\\S+)\\s+frame=(\\S+)\\s+desc=(.*)$");
+    //private static final Pattern ESLTRANSLATE_HEADER_SOURCE_PATTERN = Pattern.compile("^\\S+\\s+source=(\\S+)\\s+(.+)$");
     /**
      * Everything before the first whitespace will be recognised as the identifier and everything afterwards will be kind of description.
      */
@@ -124,6 +126,7 @@ public class XrefParser {
                 LOGGER.debug("Checking for match to GETORF regex, crossRef: " + crossReference);
 
             String originalHeaderName = crossReference.trim();
+            String possibleOriginalHeader =  originalHeaderName;
             LOGGER.warn("crossReference: " + crossReference);
 
             if (matcher.find()) {
@@ -131,8 +134,28 @@ public class XrefParser {
                 //Utilities.verboseLog("originalHeaderName: " + originalHeaderName + " and now xref-id : " + matcher.group(1));
                 String identifier = matcher.group(1).replace(">", "");
                 String description = matcher.group(2) + "\t"  + matcher.group(3);
-                LOGGER.warn("identifier: " + identifier +  " description: " + description);
-                return new ProteinXref(null, identifier, originalHeaderName, description);
+                LOGGER.warn("identifier: " + identifier +   " description: " + description);
+                final Matcher sourceMatcher = ESLTRANSLATE_HEADER_SOURCE_PATTERN.matcher(crossReference.trim());
+                if (sourceMatcher.find()) {
+                    String source = sourceMatcher.group(1);
+                    String coords = sourceMatcher.group(2);
+                    String length = sourceMatcher.group(3);
+                    String frame = sourceMatcher.group(4);
+                    String moreDesc = sourceMatcher.group(5);
+                    LOGGER.warn("identifier: " + identifier +
+                            " source: " + source +
+                            " coords: " + coords +
+                            " length: " + length +
+                            " frame: " + frame +
+                            " moreDesc: " + moreDesc +
+                            " completeDescription: " + description);
+                    String space =  " ";
+                    possibleOriginalHeader =  source.trim(); // + space + moreDesc;
+                    LOGGER.warn("possibleOriginalHeader: " + possibleOriginalHeader);
+                }
+
+
+                return new ProteinXref(null, identifier, possibleOriginalHeader, description);
             }
 
 	        // this eventually should be the only way to parse the header
@@ -196,6 +219,7 @@ public class XrefParser {
             id = id.trim();
             Matcher matcher = DEFLINE_ID_PATTERN.matcher(id);
             if (matcher.find()) {
+                Utilities.verboseLog("NucleotideSequenceXrefId: " + matcher.group(1));
                 return new NucleotideSequenceXref(null, matcher.group(1), id);
             } else {
                 return new NucleotideSequenceXref(null, id, id);

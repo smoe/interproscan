@@ -127,6 +127,7 @@ public abstract class LoadFastaFileImpl<T> implements LoadFastaFile {
                             }
                         }
                         currentId = parseId(line, lineNumber);
+                        Utilities.verboseLog("currentId : " + currentId);
                     } else {
                         // must be a sequence line.
                         if (foundIdLine) {
