@@ -3,6 +3,7 @@ package uk.ac.ebi.interpro.scan.io.match.writer;
 import org.apache.log4j.Logger;
 import uk.ac.ebi.interpro.scan.io.sequence.XrefParser;
 import uk.ac.ebi.interpro.scan.model.*;
+import uk.ac.ebi.interpro.scan.util.Utilities;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -34,8 +35,8 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
         super();
     }
 
-    public GFFResultWriterForNucSeqs(Path path, String interProScanVersion) throws IOException {
-        super(path, interProScanVersion);
+    public GFFResultWriterForNucSeqs(Path path, String interProScanVersion, boolean proteinSequence) throws IOException {
+        super(path, interProScanVersion, proteinSequence);
     }
 
     private String getNucleotideId() {
@@ -177,6 +178,7 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
                                          final String proteinIdFromGetorf) throws IOException {
         // I.
         for (OpenReadingFrame orf : protein.getOpenReadingFrames()) {
+            Utilities.verboseLog("gff ORF: " + orf.toString());
             // II.
             final NucleotideSequence nucleotideSequence = orf.getNucleotideSequence();
             final StringBuilder concatenatedNucSeqIdentifiers = new StringBuilder();
@@ -186,7 +188,11 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
                 // IV.
                 for (ProteinXref proteinXref : protein.getCrossReferences()) {
                     // Getorf appends '_N' where N is an integer to the protein accession. We need to compare this to the nucleotide sequence ID, that does not have _N on the end, so first of all strip this off for the comparison.
-                    String strippedProteinId = XrefParser.stripOfFinalUnderScore(proteinXref.getIdentifier());
+                    //String strippedProteinId = XrefParser.stripOfFinalUnderScore(proteinXref.getIdentifier());
+
+                    //String strippedProteinId = proteinXref.getIdentifier();
+                    String strippedProteinId = proteinXref.getName();
+
                     /*
                       Commented-out version number stripping to allow the short-term fix for nucleotide headers to work (IBU-2426)
                       TODO - consider if this is really necessary (may not be a good idea in allcases)
@@ -194,6 +200,7 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
                     // Get rid of those pesky version numbers too.
                     //strippedProteinId = XrefParser.stripOfVersionNumberIfExists(strippedProteinId);
                     // V.
+                    Utilities.verboseLog("strippedProteinId: " + strippedProteinId + " nucleotideSequenceXrefId: " +  nucleotideSequenceXrefId);
                     if ((nucleotideSequenceXrefId.equals(strippedProteinId))) {
                         // VI.
                         if (concatenatedNucSeqIdentifiers.length() > 0) {

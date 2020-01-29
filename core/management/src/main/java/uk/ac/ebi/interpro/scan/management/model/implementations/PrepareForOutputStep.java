@@ -357,6 +357,7 @@ public class PrepareForOutputStep extends Step {
                         for(Match match: matches){
                             String accession = match.getSignature().getAccession();
                             Utilities.verboseLog(20, "dbKey :" + dbKey + " - " + accession ); //+ " - match: " + match.getLocations()) ;
+                            Utilities.verboseLog(10, match.toString());
                             match.getSignature().getCrossReferences();
                             //match.getSignature().getEntry();
                             //try update with cross refs etc
@@ -419,6 +420,8 @@ public class PrepareForOutputStep extends Step {
                     NucleotideSequence  nucleotideSequence = nucleotideSequenceDAO.getNucleotideSequence(nucleotideSequenceId);
                     String xmlNucleotideSequence = writer.marshal(nucleotideSequence);
                     String key = nucleotideSequence.getMd5();
+                    //nucleotideSequence.getOpenReadingFrames();
+
                     nucleotideSequenceDAO.persist(key, nucleotideSequence);
                     //Utilities.verboseLog("Prepae OutPut xmlNucleotideSequence : " + nucleotideSequenceId + " -- "); // +  xmlNucleotideSequence);
                 }

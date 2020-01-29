@@ -25,7 +25,7 @@ public class GFFResultWriterForProtSeqs extends ProteinMatchesGFFResultWriter {
     private boolean writeFullGFF = true;
 
     public GFFResultWriterForProtSeqs(Path path, String interProScanVersion) throws IOException {
-        super(path, interProScanVersion);
+        super(path, interProScanVersion, true);
     }
 
     public GFFResultWriterForProtSeqs(Path path, String interProScanVersion, boolean writeFullGFF) throws IOException {

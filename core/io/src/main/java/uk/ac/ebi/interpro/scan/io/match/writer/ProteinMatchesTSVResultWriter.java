@@ -22,7 +22,7 @@ public class ProteinMatchesTSVResultWriter extends ProteinMatchesResultWriter {
 
     private TSVWriter tsvWriter;
 
-    public ProteinMatchesTSVResultWriter(Path path) throws IOException {
+    public ProteinMatchesTSVResultWriter(Path path, boolean proteinSequence) throws IOException {
         super(path);
         this.tsvWriter = new TSVWriter(super.fileWriter);
     }
@@ -86,6 +86,7 @@ public class ProteinMatchesTSVResultWriter extends ProteinMatchesResultWriter {
                         }
 
                         final List<String> mappingFields = new ArrayList<>();
+
                         mappingFields.add(proteinAc);
                         mappingFields.add(md5);
                         mappingFields.add(Integer.toString(length));

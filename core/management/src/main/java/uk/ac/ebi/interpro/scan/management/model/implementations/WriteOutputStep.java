@@ -220,7 +220,7 @@ public class WriteOutputStep extends Step {
                 }
                 switch (outputFormat) {
                     case TSV:
-                        outputToTSV(outputPath, stepInstance);
+                        outputToTSV(outputPath, stepInstance, sequenceType);
                         break;
                     case TSV_PRO:
                         outputToTSVPRO(outputPath, stepInstance);
@@ -241,7 +241,7 @@ public class WriteOutputStep extends Step {
                         outputToGFF(outputPath, stepInstance, sequenceType);
                         break;
                     case GFF3_PARTIAL:
-                        outputToGFFPartial(outputPath, stepInstance);
+                        outputToGFFPartial(outputPath, stepInstance, sequenceType);
                         break;
                     case HTML:
                         //Replace the default temp dir with the user specified one
@@ -501,6 +501,38 @@ public class WriteOutputStep extends Step {
                 final Set<NucleotideSequence> nucleotideSequences = nucleotideSequenceDAO.getNucleotideSequences();
                 for(NucleotideSequence  nucleotideSequence : nucleotideSequences ){
                     count ++;
+                    Set <OpenReadingFrame> orfs = nucleotideSequence.getOpenReadingFrames();
+                    for (OpenReadingFrame orf : orfs){
+                        String proteinKey = Long.toString(orf.getProtein().getId());
+                        Protein protein = proteinDAO.getProtein(proteinKey);
+                        Set<Match> matches = protein.getMatches();
+
+                        for (Match match : matches){
+                            StringBuilder matchBuilder = new StringBuilder();
+                            matchBuilder.append(protein.getId()).append(" ")
+                                    .append(protein.getMd5()).append(" ")
+                                    .append(match.getSignature().getSignatureLibraryRelease().getLibrary().getName()).append(" ");
+                            Entry matchEntry = match.getSignature().getEntry();
+                            if(matchEntry!= null){
+                                //check goterms
+                                //check pathways
+                                matchBuilder.append("-- entry: ").append(matchEntry.getAccession());
+                                matchEntry.getGoXRefs();
+                                if(matchEntry.getGoXRefs() != null) {
+                                    matchEntry.getGoXRefs().size();
+                                }
+                                matchEntry.getPathwayXRefs();
+                                if(matchEntry.getPathwayXRefs() != null) {
+                                    matchEntry.getPathwayXRefs().size();
+                                }
+                            }else{
+                                matchBuilder.append("-- entry is NULL");
+                            }
+                            //System.out.println("matchBuilder:  "  + matchBuilder );
+
+                        }
+                        orf.setProtein(protein);
+                    }
                     writer.write(nucleotideSequence, sequenceType, isSlimOutput);
                 }
 
@@ -626,8 +658,8 @@ public class WriteOutputStep extends Step {
     }
 
     private void outputToTSV(final Path path,
-                             final StepInstance stepInstance ) throws IOException {
-        try (ProteinMatchesTSVResultWriter writer = new ProteinMatchesTSVResultWriter(path)) {
+                             final StepInstance stepInstance, String sequenceType ) throws IOException {
+        try (ProteinMatchesTSVResultWriter writer = new ProteinMatchesTSVResultWriter(path, sequenceType.equalsIgnoreCase("p"))) {
             writeProteinMatches(writer, stepInstance);
         }
         //write the site tsv production output
@@ -698,10 +730,10 @@ public class WriteOutputStep extends Step {
         ProteinMatchesGFFResultWriter writer = null;
         try {
             if (sequenceType.equalsIgnoreCase("n")) {
-                writer = new GFFResultWriterForNucSeqs(path, interProScanVersion);
+                writer = new GFFResultWriterForNucSeqs(path, interProScanVersion, false);
             }//Default tsvWriter for proteins
             else {
-                writer = new GFFResultWriterForProtSeqs(path, interProScanVersion);
+                writer = new GFFResultWriterForProtSeqs(path, interProScanVersion, true);
             }
 
             //This step writes features (protein matches) into the GFF file
@@ -715,7 +747,7 @@ public class WriteOutputStep extends Step {
         }
     }
 
-    private void outputToGFFPartial(Path path, StepInstance stepInstance) throws IOException {
+    private void outputToGFFPartial(Path path, StepInstance stepInstance, String sequenceType) throws IOException {
         try (ProteinMatchesGFFResultWriter writer = new GFFResultWriterForProtSeqs(path, interProScanVersion, false)) {
             writeProteinMatches(writer, stepInstance);
         }

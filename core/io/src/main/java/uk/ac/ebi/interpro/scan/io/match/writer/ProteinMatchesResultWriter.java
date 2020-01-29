@@ -31,6 +31,8 @@ public abstract class ProteinMatchesResultWriter implements ProteinMatchesWriter
     protected boolean mapToPathway;
     protected String interProScanVersion = "Unknown";
 
+    protected boolean proteinSequence = true;
+
     protected DateFormat dmyFormat;
 
     protected static final Charset characterSet = Charset.defaultCharset();
@@ -70,7 +72,10 @@ public abstract class ProteinMatchesResultWriter implements ProteinMatchesWriter
         Set<ProteinXref> crossReferences = protein.getCrossReferences();
         List<String> proteinXRefs = new ArrayList<>(crossReferences.size());
         for (ProteinXref crossReference : crossReferences) {
-            proteinXRefs.add(crossReference.getIdentifier());
+            String identifier = crossReference.getIdentifier();
+            String proteinName = crossReference.getName();
+            String displayName = proteinName + "_" + identifier;
+            proteinXRefs.add(displayName);
         }
         return proteinXRefs;
 
@@ -92,4 +97,11 @@ public abstract class ProteinMatchesResultWriter implements ProteinMatchesWriter
         this.mapToPathway = mapToPathway;
     }
 
+    public boolean isProteinSequence() {
+        return proteinSequence;
+    }
+
+    public void setProteinSequence(boolean proteinSequence) {
+        this.proteinSequence = proteinSequence;
+    }
 }
