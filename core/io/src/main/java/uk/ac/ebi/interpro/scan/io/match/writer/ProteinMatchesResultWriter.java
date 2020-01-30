@@ -2,7 +2,9 @@ package uk.ac.ebi.interpro.scan.io.match.writer;
 
 import uk.ac.ebi.interpro.scan.model.Protein;
 import uk.ac.ebi.interpro.scan.model.ProteinXref;
+import uk.ac.ebi.interpro.scan.util.Utilities;
 
+import javax.rmi.CORBA.Util;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -68,13 +70,17 @@ public abstract class ProteinMatchesResultWriter implements ProteinMatchesWriter
         return proteinXRef.toString();
     }
 
-    protected List<String> getProteinAccessions(Protein protein) {
+    protected List<String> getProteinAccessions(Protein protein, boolean proteinSequence) {
         Set<ProteinXref> crossReferences = protein.getCrossReferences();
         List<String> proteinXRefs = new ArrayList<>(crossReferences.size());
         for (ProteinXref crossReference : crossReferences) {
             String identifier = crossReference.getIdentifier();
-            String proteinName = crossReference.getName();
-            String displayName = proteinName + "_" + identifier;
+            String displayName = identifier;
+            Utilities.verboseLog("proteinSequence: " + proteinSequence);
+            if (! proteinSequence) {
+                String proteinName = crossReference.getName();
+                displayName = proteinName + "_" + identifier;
+            }
             proteinXRefs.add(displayName);
         }
         return proteinXRefs;

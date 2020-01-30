@@ -72,7 +72,7 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
         String date = dmyFormat.format(new Date());
         Set<Match> matches = protein.getMatches();
         String proteinIdForGFF = null;
-        List<String> proteinIdsFromGetOrf = getProteinAccessions(protein);
+        List<String> proteinIdsFromGetOrf = getProteinAccessions(protein, proteinSequence);
         for (String proteinIdFromGetorf : proteinIdsFromGetOrf) {
             if (matches.size() > 0) {
                 proteinIdFromGetorf = getValidGFF3SeqId(proteinIdFromGetorf);
@@ -103,7 +103,7 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
             String md5 = protein.getMd5();
             String date = dmyFormat.format(new Date());
             Set<Match> matches = protein.getMatches();
-            List<String> proteinIdsFromGetOrf = getProteinAccessions(protein);
+            List<String> proteinIdsFromGetOrf = getProteinAccessions(protein, proteinSequence);
             for (String proteinIdFromGetorf : proteinIdsFromGetOrf) {
                 proteinIdFromGetorf = getValidGFF3SeqId(proteinIdFromGetorf);
                 if (matches.size() > 0) {
