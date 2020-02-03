@@ -731,9 +731,9 @@ public class WriteOutputStep extends Step {
         try {
             if (sequenceType.equalsIgnoreCase("n")) {
                 writer = new GFFResultWriterForNucSeqs(path, interProScanVersion, false);
-            }//Default tsvWriter for proteins
+            }//Default gff3Writer for proteins
             else {
-                writer = new GFFResultWriterForProtSeqs(path, interProScanVersion, true);
+                writer = new GFFResultWriterForProtSeqs(path, interProScanVersion, true, true);
             }
 
             //This step writes features (protein matches) into the GFF file
@@ -748,7 +748,7 @@ public class WriteOutputStep extends Step {
     }
 
     private void outputToGFFPartial(Path path, StepInstance stepInstance, String sequenceType) throws IOException {
-        try (ProteinMatchesGFFResultWriter writer = new GFFResultWriterForProtSeqs(path, interProScanVersion, false)) {
+        try (ProteinMatchesGFFResultWriter writer = new GFFResultWriterForProtSeqs(path, interProScanVersion, false, false)) {
             writeProteinMatches(writer, stepInstance);
         }
 

@@ -77,7 +77,11 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
             if (matches.size() > 0) {
                 proteinIdFromGetorf = getValidGFF3SeqId(proteinIdFromGetorf);
                 writeSequenceRegionPart(protein, sequenceLength, md5, proteinIdFromGetorf);
-                processMatches(matches, proteinIdForGFF, date, protein, getNucleotideId());
+
+                //processMatches(matches, proteinIdForGFF, date, protein, getNucleotideId());
+                Utilities.verboseLog("proteinSequence: " + proteinSequence + "  proteinIdFromGetorf " + proteinIdFromGetorf);
+                processMatches(matches, proteinIdFromGetorf, date, protein, getNucleotideId());
+
             }
         }
         return 0;
@@ -178,7 +182,7 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
                                          final String proteinIdFromGetorf) throws IOException {
         // I.
         for (OpenReadingFrame orf : protein.getOpenReadingFrames()) {
-            Utilities.verboseLog("gff ORF: " + orf.toString());
+            Utilities.verboseLog(40, "gff ORF: " + orf.toString());
             // II.
             final NucleotideSequence nucleotideSequence = orf.getNucleotideSequence();
             final StringBuilder concatenatedNucSeqIdentifiers = new StringBuilder();
@@ -190,6 +194,7 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
                     // Getorf appends '_N' where N is an integer to the protein accession. We need to compare this to the nucleotide sequence ID, that does not have _N on the end, so first of all strip this off for the comparison.
                     //String strippedProteinId = XrefParser.stripOfFinalUnderScore(proteinXref.getIdentifier());
 
+                    //TODO should it be the name or the identifier
                     //String strippedProteinId = proteinXref.getIdentifier();
                     String strippedProteinId = proteinXref.getName();
 
@@ -236,10 +241,19 @@ public class GFFResultWriterForNucSeqs extends ProteinMatchesGFFResultWriter {
         if (orf == null) {
             throw new IllegalArgumentException("A null orf has been passed in.");
         }
+        //String orfId = orf.getNucleotideSequence().getCrossReferences();
+        List<String> xrefIds = getProteinAccessions(orf.getProtein(), proteinSequence);
+
         final String seqId = getNucleotideId();
+        String seqIdToDisplay = seqId;
+        for (String xrefId: xrefIds){
+            if (xrefId.contains(seqId)){
+                seqIdToDisplay = xrefId;
+            }
+        }
         final String strand = (NucleotideSequenceStrand.SENSE.equals(orf.getStrand()) ? "+" : "-");
         final String orfIdentifier = buildOrfIdentifier(orf);
-        GFF3Feature orfFeature = new GFF3Feature(seqId, "getorf", "ORF", orf.getStart(), orf.getEnd(), strand);
+        GFF3Feature orfFeature = new GFF3Feature(seqIdToDisplay, "getorf", "ORF", orf.getStart(), orf.getEnd(), strand);
         orfFeature.addAttribute(GFF3Feature.ID_ATTR, orfIdentifier);
         orfFeature.addAttribute(GFF3Feature.NAME_ATTR, proteinIdFromGetorf);
         orfFeature.addAttribute(GFF3Feature.TARGET_ATTR, proteinIdForGFF + " 1" + " " + proteinLength);

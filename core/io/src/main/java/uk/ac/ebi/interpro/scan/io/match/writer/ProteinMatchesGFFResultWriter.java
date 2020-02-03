@@ -62,7 +62,7 @@ public abstract class ProteinMatchesGFFResultWriter extends ProteinMatchesResult
             //##feature-ontology URI
             //This directive indicates that the GFF3 file uses the ontology of feature types located at the indicated URI or URL.
             this.gffWriter.write("##feature-ontology http://song.cvs.sourceforge.net/viewvc/song/ontology/sofa.obo?revision=1.269");
-            this.gffWriter.write("##interproscan-version " + this.getInterProScanVersion());
+            this.gffWriter.write("#!interproscan-version " + this.getInterProScanVersion());
         }
     }
 
@@ -290,6 +290,7 @@ public abstract class ProteinMatchesGFFResultWriter extends ProteinMatchesResult
     protected void processMatches(final Set<Match> matches, final String targetId,
                                   final String date, final Protein protein, final String seqId, boolean writeAllAttributes) throws IOException {
         for (Match match : matches) {
+
             final Signature signature = match.getSignature();
             final String signatureAc = signature.getAccession();
             final SignatureLibrary signatureLibrary = signature.getSignatureLibraryRelease().getLibrary();
