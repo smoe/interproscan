@@ -129,35 +129,40 @@ public class XrefParser {
             String possibleOriginalHeader =  originalHeaderName;
             LOGGER.warn("crossReference: " + crossReference);
 
-            if (matcher.find()) {
-                //Utilities.verboseLog("MATCHES GETORF_HEADER_PATTERN");
-                //Utilities.verboseLog("originalHeaderName: " + originalHeaderName + " and now xref-id : " + matcher.group(1));
-                String identifier = matcher.group(1).replace(">", "");
-                String description = matcher.group(2) + "\t"  + matcher.group(3);
-                LOGGER.warn("identifier: " + identifier +   " description: " + description);
-                final Matcher sourceMatcher = ESLTRANSLATE_HEADER_SOURCE_PATTERN.matcher(crossReference.trim());
-                if (sourceMatcher.find()) {
-                    String source = sourceMatcher.group(1);
-                    String coords = sourceMatcher.group(2);
-                    String length = sourceMatcher.group(3);
-                    String frame = sourceMatcher.group(4);
-                    String moreDesc = sourceMatcher.group(5);
-                    LOGGER.warn("identifier: " + identifier +
-                            " source: " + source +
-                            " coords: " + coords +
-                            " length: " + length +
-                            " frame: " + frame +
-                            " moreDesc: " + moreDesc +
-                            " completeDescription: " + description);
-                    String space =  " ";
-                    possibleOriginalHeader =  source.trim(); // + space + moreDesc;
-                    LOGGER.warn("possibleOriginalHeader: " + possibleOriginalHeader);
+            if (crossReference.contains("source=")
+                    || crossReference.contains("coords=")
+                || crossReference.contains("length=")
+                || crossReference.contains("frame=")) {
+
+                if (matcher.find()) {
+                    //Utilities.verboseLog("MATCHES GETORF_HEADER_PATTERN");
+                    //Utilities.verboseLog("originalHeaderName: " + originalHeaderName + " and now xref-id : " + matcher.group(1));
+                    String identifier = matcher.group(1).replace(">", "");
+                    String description = matcher.group(2) + "\t" + matcher.group(3);
+                    LOGGER.warn("identifier: " + identifier + " description: " + description);
+                    final Matcher sourceMatcher = ESLTRANSLATE_HEADER_SOURCE_PATTERN.matcher(crossReference.trim());
+                    if (sourceMatcher.find()) {
+                        String source = sourceMatcher.group(1);
+                        String coords = sourceMatcher.group(2);
+                        String length = sourceMatcher.group(3);
+                        String frame = sourceMatcher.group(4);
+                        String moreDesc = sourceMatcher.group(5);
+                        LOGGER.warn("identifier: " + identifier +
+                                " source: " + source +
+                                " coords: " + coords +
+                                " length: " + length +
+                                " frame: " + frame +
+                                " moreDesc: " + moreDesc +
+                                " completeDescription: " + description);
+                        String space = " ";
+                        possibleOriginalHeader = source.trim(); // + space + moreDesc;
+                        LOGGER.warn("possibleOriginalHeader: " + possibleOriginalHeader);
+                    }
+
+
+                    return new ProteinXref(null, identifier, possibleOriginalHeader, description);
                 }
-
-
-                return new ProteinXref(null, identifier, possibleOriginalHeader, description);
             }
-
 	        // this eventually should be the only way to parse the header
             if (originalHeaderName.length() > 1) {
                 //Test using the header

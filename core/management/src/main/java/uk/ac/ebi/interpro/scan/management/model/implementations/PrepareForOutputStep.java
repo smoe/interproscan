@@ -353,12 +353,14 @@ public class PrepareForOutputStep extends Step {
                     }
 
                     if (matches != null){
-                        //Utilities.verboseLog("Get matches for protein  id: " + protein.getId() +  " dbKey (matchKey): " + dbKey);
+                        Utilities.verboseLog("count: " + count + " Get matches for protein  id: " + protein.getId() + " md5: " + protein.getMd5().toUpperCase() +  " dbKey (matchKey): " + dbKey);
                         for(Match match: matches){
                             String accession = match.getSignature().getAccession();
                             Utilities.verboseLog(20, "dbKey :" + dbKey + " - " + accession ); //+ " - match: " + match.getLocations()) ;
-                            Utilities.verboseLog(10, match.toString());
+
                             match.getSignature().getCrossReferences();
+                            match.getProtein().getCrossReferences();
+                            Utilities.verboseLog(10, match.toString());
                             //match.getSignature().getEntry();
                             //try update with cross refs etc
                             //updateMatch(match);

@@ -117,6 +117,7 @@ public class ProteinLoader implements SequenceLoader<Protein> {
                 for (String crossReference : crossReferences) {
                     ProteinXref xref = XrefParser.getProteinXref(crossReference);
                     protein.addCrossReference(xref);
+                    Utilities.verboseLog(10, "Protein Loader: protein + xref: " + protein.toString() + " xref: " + xref);
                 }
             }
             proteinsAwaitingPrecalcLookup.add(protein);
