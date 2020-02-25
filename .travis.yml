@@ -40,8 +40,7 @@ branches:
   only:
   - dev
   - master
-  - hamap_2019_11
-  #- release-5.41-78.0
+  - 64-bit-check
   except:
   - new_master
 
