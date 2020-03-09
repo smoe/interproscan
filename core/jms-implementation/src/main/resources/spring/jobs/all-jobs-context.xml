@@ -47,6 +47,7 @@
                 <ref bean="jobFinaliseInitialSteps"/>
                 <ref bean="jobLoadNucleicAcidSequence"/>
                 <ref bean="jobLoadFromUniParc"/>
+                <ref bean="jobLoadUniprotSequences"/>
                 <ref bean="jobPrepareForOutput"/>
                 <ref bean="jobWriteOutput"/>
 
@@ -281,6 +282,59 @@
         </property>
     </bean>
 
+
+    <!-- ######################## JOB: jobLoadUniprotSequence ############################  -->
+<!--    -->
+    <bean id="jobLoadUniprotSequences" class="uk.ac.ebi.interpro.scan.management.model.Job">
+        <property name="description"
+                  value="Load protein sequence from uniprot and load proteins to create required JobInstance objects"/>
+        <property name="analysis" value="false"/>
+    </bean>
+
+    <!-- STEP 1 -->
+    <bean id="stepFetchUniprotSequences"
+          class="uk.ac.ebi.interpro.scan.management.model.implementations.services.RunFetchUniprotSequencesStep"
+    >
+        <property name="job" ref="jobLoadUniprotSequences"/>
+        <!-- This step has no dependencies -->
+        <property name="stepDescription"
+                  value="Load proteins from a fasta file and load into DB before creating required JobInstance objects"/>
+        <property name="createStepInstancesForNewProteins" value="false"/>
+        <property name="retries" value="2"/>
+        <property name="serialGroup" value="LOAD_PROTEINS"/>
+        
+        <property name="fullPathToBinary" value="${uniprot.get.proteins.binary}"/>
+        <property name="usesFileOutputSwitch" value="true" />
+        <property name="fastaFileNameTemplate" ref="fastaFileNameTemplate"/>
+        <property name="outputFileNameTemplate" ref="getUniprotSequencesFile"/>
+        <property name="requiresDatabaseAccess" value="false"/>
+        <property name="fullPathToPython" value="${python3.command}"/>
+    </bean>
+
+
+    <!-- STEP 2 -->
+    <bean id="stepLoadUniprotSequencesIntoDB"
+          class="uk.ac.ebi.interpro.scan.management.model.implementations.stepInstanceCreation.proteinLoad.FastaFileLoadIntoDBStep"
+    >
+        <property name="job" ref="jobLoadUniprotSequences"/>
+        <!-- This step has  dependencies -->
+        <property name="dependsUpon">
+            <list>
+                <ref bean="stepFetchUniprotSequences"/>
+            </list>
+        </property>
+        <property name="stepDescription"
+                  value="Load proteins from a fasta file and load into DB before creating required JobInstance objects"/>
+        <property name="createStepInstancesForNewProteins" value="false"/>
+        <property name="retries" value="2"/>
+        <property name="serialGroup" value="LOAD_PROTEINS"/>
+        <property name="fastaFileLoader" ref="proteinFastaFileLoaderIntoDB"/>
+        <property name="overridingFastaFileName" ref="getUniprotSequencesFile"/>
+
+        <property name="jobs" ref="jobs"/>
+        <property name="stepInstanceDAO" ref="stepInstanceDAO"/>
+    </bean>
+
     <!-- ######################## JOB: jobLoadNucleicAcidSequence ############################  -->
     <bean id="jobLoadNucleicAcidSequence" class="uk.ac.ebi.interpro.scan.management.model.Job">
         <property name="description"
@@ -455,6 +509,10 @@
 
     <!-- ######################## Dependencies ############################  -->
 
+    <bean id="getUniprotSequencesFile" class="java.lang.String">
+        <constructor-arg value="uniprot.seqs.fasta"/>
+    </bean>
+
     <bean id="getOrfResultFile" class="java.lang.String">
         <constructor-arg value="orfs.fasta"/>
     </bean>
@@ -595,6 +653,7 @@
             <set>
                 <value>p</value>
                 <value>n</value>
+                <value>u</value>
             </set>
         </constructor-arg>
     </bean>

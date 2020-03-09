@@ -116,7 +116,6 @@ public class StandaloneBlackBoxMaster extends AbstractBlackBoxMaster {
 
             int stepInstancesCreatedByLoadStep = createStepInstances();
 
-
             //calculate minimum expected jobs
 
             int minimumStepsExpected = getMinimumStepsExpected();

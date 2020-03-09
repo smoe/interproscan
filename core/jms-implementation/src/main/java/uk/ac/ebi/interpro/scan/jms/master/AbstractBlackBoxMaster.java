@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
 import uk.ac.ebi.interpro.scan.io.FileOutputFormat;
 import uk.ac.ebi.interpro.scan.jms.activemq.CleanRunDatabase;
 import uk.ac.ebi.interpro.scan.management.model.implementations.WriteOutputStep;
+import uk.ac.ebi.interpro.scan.management.model.implementations.services.RunFetchUniprotSequencesStep;
 import uk.ac.ebi.interpro.scan.management.model.implementations.stepInstanceCreation.StepInstanceCreatingStep;
 import uk.ac.ebi.interpro.scan.management.model.implementations.stepInstanceCreation.nucleotide.RunGetOrfStep;
 import uk.ac.ebi.interpro.scan.management.model.implementations.stepInstanceCreation.proteinLoad.FastaFileLoadStep;
@@ -116,9 +117,14 @@ public abstract class AbstractBlackBoxMaster extends AbstractMaster implements B
     }
 
     protected int createStepInstances() {
-        return ("n".equalsIgnoreCase(this.sequenceType))
-                ? createNucleicAcidLoadStepInstance()
-                : createFastaFileLoadStepInstance();
+        if(this.sequenceType.equalsIgnoreCase("n")){
+            return createNucleicAcidLoadStepInstance();
+        }
+        if(this.sequenceType.equalsIgnoreCase("u")){
+            return createUniprotSequencesLoadStepInstance();
+        }
+        //else there are proteins
+        return createFastaFileLoadStepInstance();
     }
 
 
@@ -134,6 +140,24 @@ public abstract class AbstractBlackBoxMaster extends AbstractMaster implements B
         } else {
             LOGGER.error("No nucleic acid sequence file path has been provided to load.");
         }
+        return stepInstancesCreated;
+    }
+
+    protected int createUniprotSequencesLoadStepInstance() {
+        int stepInstancesCreated = 0;
+        if (fastaFilePath != null) {
+            LOGGER.debug("Creating fetch Uniprot Sequences step.");
+            Map<String, String> params = new HashMap<>();
+            params.put(RunFetchUniprotSequencesStep.ID_FILE_PATH_KEY, fastaFilePath);
+            params.put(FastaFileLoadStep.FASTA_FILE_PATH_KEY, fastaFilePath);
+            // now change the parameters to proteins?
+            this.sequenceType = "p";
+            createBlackBoxParams(params);
+            stepInstancesCreated = createStepInstancesForJob("jobLoadUniprotSequences", params);
+        } else {
+            LOGGER.error("No id file path has been provided to load.");
+        }
+
         return stepInstancesCreated;
     }
 
